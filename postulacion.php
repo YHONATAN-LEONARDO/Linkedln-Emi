@@ -1,59 +1,129 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Postulaciones</title>
-    <link rel="stylesheet" href="/public/css/normalize.css">
-    <link rel="stylesheet" href="/public/css/styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Lobster&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&family=Share+Tech&display=swap" rel="stylesheet">
+<?php
+// postulaciones.php
+session_start();
+require_once 'config/database.php'; // Ajusta ruta según tu proyecto
 
+// Validar usuario logueado
+if (!isset($_SESSION['usuario_id'])) {
+    header('Location: /views/usuario/login.php');
+    exit;
+}
+
+$usuario_id = $_SESSION['usuario_id'];
+
+// Obtener postulaciones del usuario
+$stmt = $conn->prepare("
+    SELECT p.id, o.titulo AS oferta_titulo, o.ubicacion, p.estado, p.creado_en
+    FROM postulaciones p
+    JOIN ofertas o ON p.oferta_id = o.id
+    WHERE p.usuario_id = :usuario_id
+    ORDER BY p.creado_en DESC
+");
+$stmt->bindParam(':usuario_id', $usuario_id);
+$stmt->execute();
+$postulaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mis Postulaciones - LinkedIn EMI</title>
+<link rel="stylesheet" href="/public/css/normalize.css">
+<link rel="stylesheet" href="/public/css/styles.css">
+<style>
+.postulacion-container {
+    width: 90%;
+    max-width: 900px;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    font-family: 'Roboto', sans-serif;
+}
+
+.postulacion-container h1 {
+    font-size: 2rem;
+    color: #0077b5;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.postulacion-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem;
+    border: 1px solid #ccc;
+    border-radius: 0.8rem;
+    background-color: #fff;
+    gap: 1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.postulacion-info p {
+    margin: 0.3rem 0;
+    font-size: 1.2rem;
+}
+
+.postulacion-actions button {
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    background-color: #0077b5;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.postulacion-actions button:hover {
+    background-color: #005f8d;
+}
+
+p.no-postulaciones {
+    text-align: center;
+    font-size: 1.3rem;
+    margin-top: 2rem;
+}
+</style>
 </head>
 <body>
-  <?php include 'views/cabeza/header.php'; ?>
-    <main class="postulacion-container">
-        <h1>Mis Postulaciones</h1>
 
-        <!-- Card de postulación 1 -->
-        <div class="postulacion-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 1rem; border: 0.1rem solid #ccc; border-radius: 0.8rem;">
-            <div class="postulacion-info">
-                <p><strong>Real Estate Rental Virtual Assistant</strong></p>
-                <p>Bolivia · hace 1 mes</p>
-                <p>Estado: <strong>En revisión</strong></p>
-            </div>
-            <div class="postulacion-actions">
-                <button class="btn-btn">Cancelar Postulación</button>
-            </div>
-        </div>
+<?php include 'views/cabeza/header.php'; ?>
 
-        <!-- Card de postulación 2 -->
-        <div class="postulacion-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 1rem; border: 0.1rem solid #ccc; border-radius: 0.8rem;">
-            <div class="postulacion-info">
-                <p><strong>Marketing Specialist</strong></p>
-                <p>Bolivia · hace 2 semanas</p>
-                <p>Estado: <strong>Aceptada</strong></p>
-            </div>
-            <div class="postulacion-actions">
-                <button class="btn-btn">Cancelar Postulación</button>
-            </div>
-        </div>
+<main class="postulacion-container">
+    <h1>Mis Postulaciones</h1>
 
-        <!-- Card de postulación 3 -->
-        <div class="postulacion-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 1rem; border: 0.1rem solid #ccc; border-radius: 0.8rem;">
-            <div class="postulacion-info">
-                <p><strong>Software Developer</strong></p>
-                <p>Bolivia · hace 3 días</p>
-                <p>Estado: <strong>Rechazada</strong></p>
+    <?php if (count($postulaciones) > 0): ?>
+        <?php foreach ($postulaciones as $post): ?>
+            <div class="postulacion-card">
+                <div class="postulacion-info">
+                    <p><strong><?= htmlspecialchars($post['oferta_titulo']) ?></strong></p>
+                    <p><?= htmlspecialchars($post['ubicacion']) ?> · hace <?php 
+                        $diff = time() - strtotime($post['creado_en']);
+                        if ($diff < 3600) echo intval($diff / 60) . ' minutos';
+                        elseif ($diff < 86400) echo intval($diff / 3600) . ' horas';
+                        elseif ($diff < 604800) echo intval($diff / 86400) . ' días';
+                        else echo intval($diff / 604800) . ' semanas';
+                    ?></p>
+                    <p>Estado: <strong><?= htmlspecialchars($post['estado']) ?></strong></p>
+                </div>
+                <div class="postulacion-actions">
+                    <form method="POST" action="cancelar_postulacion.php">
+                        <input type="hidden" name="postulacion_id" value="<?= $post['id'] ?>">
+                        <button type="submit">Cancelar Postulación</button>
+                    </form>
+                </div>
             </div>
-            <div class="postulacion-actions">
-                <button class="btn-btn">Cancelar Postulación</button>
-            </div>
-        </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <p class="no-postulaciones">No tienes postulaciones aún.</p>
+    <?php endif; ?>
+</main>
 
-    </main>
-  <?php include 'views/cabeza/footer.php'; ?>
+<?php include 'views/cabeza/footer.php'; ?>
 
 </body>
 </html>

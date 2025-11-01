@@ -1,5 +1,32 @@
 <?php
-require_once __DIR__ . '/config/database.php'; // CORRECTO si config está en la raíz
+require_once __DIR__ . '/config/database.php'; // Ajusta la ruta según tu proyecto
+session_start();
+
+// Validar usuario logueado
+if (!isset($_SESSION['usuario_id'])) {
+    header('Location: /views/usuario/login.php');
+    exit;
+}
+
+$usuario_id = $_SESSION['usuario_id'];
+$mensaje = '';
+
+// Procesar postulación
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['oferta_id'])) {
+    $oferta_id = intval($_POST['oferta_id']);
+
+    // Verificar si ya postuló
+    $check = $conn->prepare("SELECT * FROM postulaciones WHERE usuario_id = :usuario_id AND oferta_id = :oferta_id");
+    $check->execute([':usuario_id' => $usuario_id, ':oferta_id' => $oferta_id]);
+
+    if ($check->rowCount() == 0) {
+        $stmt = $conn->prepare("INSERT INTO postulaciones (usuario_id, oferta_id, estado, creado_en) VALUES (:usuario_id, :oferta_id, 'en_revision', GETDATE())");
+        $stmt->execute([':usuario_id' => $usuario_id, ':oferta_id' => $oferta_id]);
+        $mensaje = "Postulación realizada correctamente.";
+    } else {
+        $mensaje = "Ya te postulaste a esta oferta.";
+    }
+}
 
 // FILTROS
 $ubicacion = $_GET['ubicacion'] ?? '';
@@ -35,7 +62,7 @@ $ofertas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
@@ -43,23 +70,22 @@ $ofertas = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Empleos</title>
     <link rel="stylesheet" href="/public/css/normalize.css">
     <link rel="stylesheet" href="/public/css/styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Arvo:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* Básicos para mostrar lado izquierdo y derecho */
         .empleo {
             display: flex;
-            gap: 20px;
+            gap: 2rem;
         }
 
-      
+        .empleo-izquierdo,
+        .empleo-derecho {
+            flex: 1;
+        }
 
         .plo {
             cursor: pointer;
             border: 1px solid #ddd;
-            padding: 10px;
-            margin: 10px 0;
+            padding: 1rem;
+            margin-bottom: 1rem;
             display: flex;
             gap: 10px;
         }
@@ -71,21 +97,29 @@ $ofertas = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         .btn-btn {
-            padding: 5px 10px;
+            padding: .5rem 1rem;
             background: #007bff;
             color: #fff;
             border: none;
             cursor: pointer;
-            margin-top: 5px;
+            border-radius: .3rem;
+        }
+
+        .mensaje {
+            margin: 1rem 0;
+            color: green;
+            font-weight: bold;
         }
     </style>
 </head>
 
 <body>
+    
     <?php include 'views/cabeza/header.php'; ?>
 
+    <div class="mensaje"><?= htmlspecialchars($mensaje) ?></div>
+
     <div class="filtros">
-        <h2>Filtros de búsqueda</h2>
         <form method="GET">
             <label for="ubicacion">Ubicación:</label>
             <select id="ubicacion" name="ubicacion">
@@ -98,67 +132,58 @@ $ofertas = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <fieldset>
                 <legend>Jornada:</legend>
                 <label><input type="checkbox" name="jornada[]" value="completa" <?= in_array('completa', $jornada) ? 'checked' : '' ?>> Completa</label>
-                <label><input type="checkbox" name="jornada[]" value="media" <?= in_array('media', $jornada) ? 'checked' : '' ?>> Media jornada</label>
+                <label><input type="checkbox" name="jornada[]" value="media" <?= in_array('media', $jornada) ? 'checked' : '' ?>> Media</label>
                 <label><input type="checkbox" name="jornada[]" value="remoto" <?= in_array('remoto', $jornada) ? 'checked' : '' ?>> Remoto</label>
             </fieldset>
 
-            <label for="experiencia">Años de experiencia:</label>
-            <input type="number" id="experiencia" name="experiencia" min="0" max="50" value="<?= htmlspecialchars($experiencia) ?>">
+            <label for="experiencia">Años experiencia:</label>
+            <input type="number" name="experiencia" id="experiencia" value="<?= htmlspecialchars($experiencia) ?>">
 
-            <button class="btn-btn" type="submit">Aplicar filtros</button>
+            <button class="btn-btn" type="submit">Filtrar</button>
         </form>
     </div>
 
     <main class="empleo">
         <section class="empleo-izquierdo io">
-            <div>
-                <p>Principales Empleos que te recomienda la Emi</p>
-                <p>En función de tu perfil y actividad.</p>
-                <p><?= count($ofertas) ?> resultados</p>
-            </div>
-
             <?php foreach ($ofertas as $o): ?>
                 <div class="plo oferta-item"
+                    data-id="<?= $o['id'] ?>"
                     data-titulo="<?= htmlspecialchars($o['titulo'], ENT_QUOTES) ?>"
                     data-ubicacion="<?= htmlspecialchars($o['ubicacion'], ENT_QUOTES) ?>"
                     data-modalidad="<?= htmlspecialchars($o['modalidad'], ENT_QUOTES) ?>"
                     data-jornada="<?= htmlspecialchars($o['tipo_jornada'], ENT_QUOTES) ?>"
                     data-empresa="<?= htmlspecialchars($o['empresa'], ENT_QUOTES) ?>"
-                    data-logo="<?= $o['logo_empresa'] ?: 'image.png' ?>"
+             data-logo="<?= $o['imagen_empresa'] ?: 'main.png' ?>"
+
                     data-descripcion="<?= htmlspecialchars($o['descripcion'], ENT_QUOTES) ?>">
-                    <img src="/public/img/<?= $o['logo_empresa'] ?: 'main.png' ?>" alt="">
+
+                    <img src="/public/img/<?php echo $o['imagen_empresa'] ?: 'main.png'; ?>" alt="">
+
+
                     <div>
                         <p><?= htmlspecialchars($o['titulo']) ?></p>
                         <p><?= htmlspecialchars($o['empresa']) ?></p>
                         <p><?= htmlspecialchars($o['ubicacion']) ?></p>
-                        <p class="btn-btn">Favorito</p>
                     </div>
                 </div>
+
             <?php endforeach; ?>
         </section>
 
         <section class="empleo-derecho io" id="detalle-oferta">
             <?php if (!empty($ofertas[0])):
                 $o = $ofertas[0]; ?>
-                <input type="submit" value="Postularse" class="btn-btn">
-                <p id="titulo"><?= htmlspecialchars($o['titulo']) ?></p>
-                <p id="ubicacion"><?= htmlspecialchars($o['ubicacion']) ?> · hace 1 mes · Más de 100 solicitudes</p>
-                <div>
-                    <p id="modalidad"><?= ucfirst($o['modalidad']) ?></p>
-                    <p id="jornada">Jornada <?= ucfirst($o['tipo_jornada']) ?></p>
-                    <p>Solicitud sencilla</p>
-                </div>
-                <div>
-                    <p>Conoce al equipo de contratación</p>
-                    <div>
-                        <img id="logo_empresa" src="/public/img/<?= $o['logo_empresa'] ?: 'image.png' ?>" alt="">
-                        <div>
-                            <p id="empresa"><?= htmlspecialchars($o['empresa']) ?></p>
-                            <p>Anunciante del empleo</p>
-                        </div>
-                    </div>
-                </div>
-                <p>Acerca del empleo</p>
+                <form method="POST">
+                    <input type="hidden" name="oferta_id" value="<?= $o['id'] ?>">
+                    <button type="submit" class="btn-btn">Postularse</button>
+                </form>
+                <h2 id="titulo"><?= htmlspecialchars($o['titulo']) ?></h2>
+                <p id="ubicacion"><?= htmlspecialchars($o['ubicacion']) ?></p>
+                <p id="modalidad"><?= ucfirst($o['modalidad']) ?></p>
+                <p id="jornada">Jornada <?= ucfirst($o['tipo_jornada']) ?></p>
+                <h3 id="empresa"><?= htmlspecialchars($o['empresa']) ?></h3>
+<img id="logo_empresa" src="/public/img/<?= $o['imagen_empresa'] ?: 'main.png' ?>" width="100">
+
                 <p id="descripcion"><?= nl2br(htmlspecialchars($o['descripcion'])) ?></p>
             <?php else: ?>
                 <p>No hay ofertas disponibles.</p>
@@ -167,18 +192,23 @@ $ofertas = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </main>
 
     <script>
-        // Click en oferta para actualizar detalle
         document.querySelectorAll('.oferta-item').forEach(item => {
-            item.addEventListener('click', () => {
-                document.getElementById('titulo').textContent = item.dataset.titulo;
-                document.getElementById('ubicacion').textContent = item.dataset.ubicacion + ' · hace 1 mes · Más de 100 solicitudes';
-                document.getElementById('modalidad').textContent = item.dataset.modalidad;
-                document.getElementById('jornada').textContent = 'Jornada ' + item.dataset.jornada;
-                document.getElementById('empresa').textContent = item.dataset.empresa;
-                document.getElementById('logo_empresa').src = '/public/img/' + item.dataset.logo;
-                document.getElementById('descripcion').innerHTML = item.dataset.descripcion.replace(/\n/g, "<br>");
-            });
-        });
+    item.addEventListener('click', () => {
+        // actualizar texto y detalles
+        document.getElementById('titulo').textContent = item.dataset.titulo;
+        document.getElementById('ubicacion').textContent = item.dataset.ubicacion;
+        document.getElementById('modalidad').textContent = item.dataset.modalidad;
+        document.getElementById('jornada').textContent = 'Jornada ' + item.dataset.jornada;
+        document.getElementById('empresa').textContent = item.dataset.empresa;
+       document.getElementById('logo_empresa').src = '/public/img/' + item.dataset.logo;
+
+        document.getElementById('descripcion').innerHTML = item.dataset.descripcion.replace(/\n/g, "<br>");
+
+        // actualizar el input del formulario
+        document.querySelector('form button[type="submit"]').previousElementSibling.value = item.dataset.id;
+    });
+});
+
     </script>
 
     <?php include 'views/cabeza/footer.php'; ?>

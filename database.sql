@@ -311,20 +311,7 @@ INSERT INTO subcategorias (categoria_id, nombre, descripcion, creado_en) VALUES
 (2, N'Gestión de Proyectos', N'Administración y planificación', GETDATE()),
 (3, N'Electromecánica', N'Mantenimiento y control industrial', GETDATE());
 
--- OFERTA DE EJEMPLO
-INSERT INTO ofertas
-(usuario_id, categoria_id, subcategoria_id, titulo, descripcion, ubicacion, tipo_jornada, modalidad, documento_adj, estado, publicado_en, actualizado_en)
-VALUES
-(1, 1, 1,
- N'Asistente Virtual (The Link Housing)',
- N'Apoyo administrativo remoto. Uso de Google Sheets. Inglés intermedio.',
- N'Bolivia (remoto)',
- N'completa',
- N'remoto',
- N'CV_Asistente.pdf',
- N'aprobado',
- GETDATE(),
- GETDATE());
+
 
 -- USUARIO POSTULANTE DEMO
 INSERT INTO usuarios
@@ -335,32 +322,79 @@ VALUES
  'activo',
  GETDATE());
 
--- POSTULACIÓN DE EJEMPLO
-INSERT INTO postulaciones (oferta_id, usuario_id, estado, calificacion, mensaje, creado_en)
-VALUES
-(1, 2, 'en_revision', NULL, N'Me interesa la vacante', GETDATE());
 
--- PUBLICACIÓN DE EJEMPLO
-INSERT INTO publicaciones (usuario_id, contenido, imagen, creado_en)
-VALUES
-(1, N'¡Bienvenidos a la nueva red profesional de la EMI!', N'public/img/image.png', GETDATE());
 
--- COMENTARIO DE EJEMPLO
-INSERT INTO comentarios (publicacion_id, usuario_id, comentario, creado_en)
-VALUES
-(1, 1, N'Este es un comentario de prueba.', GETDATE());
 
--- REACCIÓN DE EJEMPLO
-INSERT INTO reacciones (publicacion_id, usuario_id, tipo, creado_en)
-VALUES
-(1, 1, N'like', GETDATE());
-
--- ACTIVIDAD / LOG DE EJEMPLO
-INSERT INTO actividades (usuario_id, accion, descripcion, ip, creado_en)
-VALUES
-(1, N'login', N'Inicio de sesión exitoso', N'127.0.0.1', GETDATE());
 
 -- ALERTA DE SEGURIDAD DE EJEMPLO
 INSERT INTO alertas_seguridad (usuario_id, tipo, detalle, atendido, creado_en)
 VALUES
 (1, N'acceso_sospechoso', N'Se detectó un acceso desde IP desconocida', 0, GETDATE());
+
+
+
+
+
+---------------------------------------------------
+-- 1️⃣ Insertar 10 usuarios de prueba
+---------------------------------------------------
+INSERT INTO usuarios (rol_id, nombre, correo, password, estado, creado_en, foto)
+VALUES
+(3, 'Yhonatan Mamani', 'yhonatan@emi.edu.bo', HASHBYTES('SHA2_256','yhonatan123'), 'activo', GETDATE(), 'main.png'),
+(3, 'Lucía Flores', 'lucia@emi.edu.bo', HASHBYTES('SHA2_256','lucia123'), 'activo', GETDATE(), 'main.png'),
+(3, 'Carlos Pinto', 'carlos@emi.edu.bo', HASHBYTES('SHA2_256','carlos123'), 'activo', GETDATE(), 'main.png'),
+(3, 'María Ramos', 'maria@emi.edu.bo', HASHBYTES('SHA2_256','maria123'), 'activo', GETDATE(), 'main.png'),
+(3, 'Fernando Aguilar', 'fernando@emi.edu.bo', HASHBYTES('SHA2_256','fernando123'), 'activo', GETDATE(), 'main.png'),
+(3, 'Laura Rojas', 'laura@emi.edu.bo', HASHBYTES('SHA2_256','laura123'), 'activo', GETDATE(), 'main.png'),
+(3, 'Andrés Quispe', 'andres@emi.edu.bo', HASHBYTES('SHA2_256','andres123'), 'activo', GETDATE(), 'main.png'),
+(3, 'Natalia Vargas', 'natalia@emi.edu.bo', HASHBYTES('SHA2_256','natalia123'), 'activo', GETDATE(), 'main.png'),
+(3, 'Jorge Castro', 'jorge@emi.edu.bo', HASHBYTES('SHA2_256','jorge123'), 'activo', GETDATE(), 'main.png'),
+(3, 'Paola López', 'paola@emi.edu.bo', HASHBYTES('SHA2_256','paola123'), 'activo', GETDATE(), 'main.png');
+GO
+
+
+---------------------------------------------------
+-- 2️⃣ Insertar 2 publicaciones por cada usuario
+---------------------------------------------------
+INSERT INTO publicaciones (usuario_id, contenido, imagen, creado_en)
+VALUES
+-- Usuario 2
+(2, N'Empezando mi carrera en ciberseguridad en la EMI.', 'main.png', GETDATE()),
+(2, N'Nuevo proyecto de seguridad web completado con éxito.', 'main.png', GETDATE()),
+
+-- Usuario 3
+(3, N'Participé en un curso de redes Cisco, aprendí mucho.', 'main.png', GETDATE()),
+(3, N'Trabajando en mi portafolio como desarrollador backend.', 'main.png', GETDATE()),
+
+-- Usuario 4
+(4, N'Primer día en prácticas profesionales en la EMI.', 'main.png', GETDATE()),
+(4, N'Super contenta con mi equipo de trabajo, aprendiendo día a día.', 'main.png', GETDATE()),
+
+-- Usuario 5
+(5, N'Iniciando un nuevo proyecto de desarrollo en Python.', 'main.png', GETDATE()),
+(5, N'Probando herramientas de automatización con Selenium.', 'main.png', GETDATE()),
+
+-- Usuario 6
+(6, N'Explorando la administración de servidores Linux.', 'main.png', GETDATE()),
+(6, N'Configuré un entorno de pruebas en Docker, muy útil.', 'main.png', GETDATE()),
+
+-- Usuario 7
+(7, N'Trabajando en un análisis de vulnerabilidades con Nmap.', 'main.png', GETDATE()),
+(7, N'Primera experiencia usando Metasploit en entornos controlados.', 'main.png', GETDATE()),
+
+-- Usuario 8
+(8, N'Estudiando seguridad ofensiva con S4vitar.', 'main.png', GETDATE()),
+(8, N'Mi primer laboratorio en Hack The Box completado.', 'main.png', GETDATE()),
+
+-- Usuario 9
+(9, N'Aprendiendo más sobre administración de bases de datos SQL Server.', 'main.png', GETDATE()),
+(9, N'Implementando triggers y stored procedures en proyectos.', 'main.png', GETDATE()),
+
+-- Usuario 10
+(10, N'Trabajando en un dashboard en Power BI para mi práctica.', 'main.png', GETDATE()),
+(10, N'Integrando datos desde API REST hacia mi sistema.', 'main.png', GETDATE()),
+
+-- Usuario 11
+(11, N'Practicando desarrollo web con PHP y MySQL.', 'main.png', GETDATE()),
+(11, N'Construyendo mi primer sistema de gestión estudiantil.', 'main.png', GETDATE());
+GO

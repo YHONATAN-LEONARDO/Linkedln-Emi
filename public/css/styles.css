@@ -1605,3 +1605,84 @@ ul {
     width: 100%;
   }
 }
+
+
+
+/* styles-publicacion.css con rem base 10px */
+
+main.publicar-u {
+    max-width: 80rem;      /* 800px */
+    margin: 5rem auto;     /* 50px */
+    padding: 2rem;         /* 20px */
+    background-color: #fff;
+    border-radius: 1.2rem; /* 12px */
+    box-shadow: 0 0.4rem 1.2rem rgba(0,0,0,0.1); /* 4px 12px */
+    margin-top: 20rem;
+}
+
+.crear-publicacion h1 {
+    font-size: 1.8rem;     /* 18px */
+    margin-bottom: 2rem;   /* 20px */
+    color: #0a66c2;
+    text-align: center;
+}
+
+.crear-publicacion form {
+    display: flex;
+    flex-direction: column;
+}
+
+.crear-publicacion label {
+    font-weight: 600;
+    margin-bottom: 0.8rem; /* 8px */
+    color: #0a66c2;
+}
+
+.crear-publicacion textarea {
+    padding: 1.2rem;           /* 12px */
+    border-radius: 0.8rem;     /* 8px */
+    border: 0.1rem solid #ccd0d5; /* 1px */
+    resize: vertical;
+    font-size: 1rem;           /* 10px */
+    margin-bottom: 2rem;       /* 20px */
+    transition: border 0.3s;
+}
+
+.crear-publicacion textarea:focus {
+    border-color: #0a66c2;
+    outline: none;
+}
+
+.crear-publicacion button {
+    background-color: #0a66c2;
+    color: #fff;
+    border: none;
+    border-radius: 0.8rem;  /* 8px */
+    padding: 1.2rem 2rem;   /* 12px 20px */
+    font-size: 1rem;        /* 10px */
+    cursor: pointer;
+    margin-bottom: 1rem;    /* 10px */
+    transition: background-color 0.3s;
+}
+
+.crear-publicacion button:hover {
+    background-color: #004182;
+}
+
+.crear-publicacion a button {
+    background-color: #e1e9ee;
+    color: #333;
+}
+
+.crear-publicacion a button:hover {
+    background-color: #cfd8dc;
+}
+
+.crear-publicacion p {
+    font-size: 0.95rem;   /* 9.5px */
+    color: red;
+    margin-bottom: 1.2rem; /* 12px */
+    text-align: center;
+}
+
+

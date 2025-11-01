@@ -1,6 +1,27 @@
 <?php
 // convocatoria.php
 session_start();
+$docsPath = __DIR__ . '/../public/docs/';
+$imgPath  = __DIR__ . '/../public/img/';
+
+// Crear carpetas si no existen
+if (!is_dir($docsPath)) {
+    mkdir($docsPath, 0755, true); // true = crear recursivamente
+}
+if (!is_dir($imgPath)) {
+    mkdir($imgPath, 0755, true);
+}
+
+// Guardar archivos
+if (isset($_FILES['documento']) && $_FILES['documento']['error'] === UPLOAD_ERR_OK) {
+    $nombreDoc = time() . '_' . basename($_FILES['documento']['name']);
+    move_uploaded_file($_FILES['documento']['tmp_name'], $docsPath . $nombreDoc);
+}
+
+if (isset($_FILES['imagen_empresa']) && $_FILES['imagen_empresa']['error'] === UPLOAD_ERR_OK) {
+    $nombreImg = time() . '_' . basename($_FILES['imagen_empresa']['name']);
+    move_uploaded_file($_FILES['imagen_empresa']['tmp_name'], $imgPath . $nombreImg);
+}
 
 // incluye helpers / DB / session
 require_once __DIR__ . '/config/database.php';    // debe definir $conn (PDO)
@@ -43,6 +64,7 @@ function obtenerPostulantes(PDO $conn, $oferta_id)
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 
