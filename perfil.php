@@ -37,6 +37,10 @@
 
                 <button>Ver publicaciones</button>
             </a>
+            <a href="postulacion.php">
+                <button>Postulaciones</button>
+            </a>
+            
         </div>
     </section>
 

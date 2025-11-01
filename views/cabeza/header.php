@@ -4,15 +4,15 @@ $ruta = $_SERVER['REQUEST_URI'];
 ?>
 
 <?php if ($ruta === '/' || $ruta === '/index.php'): ?>
-<header>
-    <img src="/public/img/fondo.jpg" alt="">
-</header>
+    <header>
+        <img src="/public/img/fondo.jpg" alt="">
+    </header>
 <?php endif; ?>
 
 <nav>
     <div class="nav-1 navi">
         <a href="/index.php">
-            
+
             <img class="nav-1-img" src="/public/img/main.png" alt="">
         </a>
         <!-- <div class="busqueda">
@@ -23,24 +23,38 @@ $ruta = $_SERVER['REQUEST_URI'];
 
     <div class="nav-2 navi">
         <div class="contenedor-icono">
-            <ion-icon name="home-outline"></ion-icon>
-            Inicio
+            <a href="/"class="contenedor-icono">
+                <ion-icon name="home-outline"></ion-icon>
+                Inicio
+
+            </a>
         </div>
+        <!-- <div class="contenedor-icono">
+            <a href="red.php"class="contenedor-icono">
+
+                <ion-icon name="git-network-outline"></ion-icon>
+                Mi Red
+            </a>
+        </div> -->
         <div class="contenedor-icono">
-            <ion-icon name="git-network-outline"></ion-icon>
-            Mi Red
+            <a href="empleo.php"class="contenedor-icono">
+
+                <ion-icon name="newspaper-outline"></ion-icon>
+                Empleo
+            </a>
         </div>
+        <!-- <div class="contenedor-icono">
+            <a href=""class="contenedor-icono">
+
+                <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
+                Mensaje
+            </a>
+        </div> -->
         <div class="contenedor-icono">
-            <ion-icon name="newspaper-outline"></ion-icon>
-            Empleo
-        </div>
-        <div class="contenedor-icono">
-            <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
-            Mensaje
-        </div>
-        <div class="contenedor-icono">
-            <ion-icon name="notifications-outline"></ion-icon>
-            Notificaciones
+            <a href="notificacion.php"class="contenedor-icono" >
+                <ion-icon name="notifications-outline"></ion-icon>
+                Notificaciones
+            </a>
         </div>
     </div>
 
