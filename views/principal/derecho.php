@@ -60,7 +60,11 @@ $publicaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <p><?php echo nl2br(htmlspecialchars($pub['contenido'])); ?></p>
 
                         <?php if(!empty($pub['imagen'])): ?>
-                        <img class="img-card" src="<?php echo "public/img/" . $pub['imagen']; ?>" alt="Imagen publicación">
+                   <img class="img-card"
+     src="<?php echo htmlspecialchars($pub['imagen']); ?>"
+     alt="Imagen publicación"
+     style="width:100%; max-width:350px; height:auto; border-radius:10px; margin:10px auto; display:block; object-fit:cover;">
+
 
 
                         <?php endif; ?>

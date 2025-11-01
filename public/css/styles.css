@@ -293,7 +293,6 @@ nav {
 }
 
 .lado-izquierdo {
-  border: 3px solid black;
   flex: 1; /* ocupa 1 parte */
   position: sticky;
   top: 0;
@@ -303,7 +302,6 @@ nav {
 }
 
 .lado-derecho {
-  border: 3px solid black;
   flex: 3; /* ocupa 3 partes */
   overflow-y: scroll; /* scroll vertical */
 }
@@ -1686,3 +1684,7 @@ main.publicar-u {
 }
 
 
+/* Imagen dentro de las publicaciones */
+.ab{
+  width: 10rem;
+}

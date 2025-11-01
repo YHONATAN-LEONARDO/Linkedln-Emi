@@ -353,48 +353,46 @@ VALUES
 GO
 
 
----------------------------------------------------
 -- 2️⃣ Insertar 2 publicaciones por cada usuario
----------------------------------------------------
 INSERT INTO publicaciones (usuario_id, contenido, imagen, creado_en)
 VALUES
 -- Usuario 2
-(2, N'Empezando mi carrera en ciberseguridad en la EMI.', 'main.png', GETDATE()),
-(2, N'Nuevo proyecto de seguridad web completado con éxito.', 'main.png', GETDATE()),
+(2, N'Empezando mi carrera en ciberseguridad en la EMI.', '/uploads/publicaciones/main.png', GETDATE()),
+(2, N'Nuevo proyecto de seguridad web completado con éxito.', '/uploads/publicaciones/main.png', GETDATE()),
 
 -- Usuario 3
-(3, N'Participé en un curso de redes Cisco, aprendí mucho.', 'main.png', GETDATE()),
-(3, N'Trabajando en mi portafolio como desarrollador backend.', 'main.png', GETDATE()),
+(3, N'Participé en un curso de redes Cisco, aprendí mucho.', '/uploads/publicaciones/main.png', GETDATE()),
+(3, N'Trabajando en mi portafolio como desarrollador backend.', '/uploads/publicaciones/main.png', GETDATE()),
 
 -- Usuario 4
-(4, N'Primer día en prácticas profesionales en la EMI.', 'main.png', GETDATE()),
-(4, N'Super contenta con mi equipo de trabajo, aprendiendo día a día.', 'main.png', GETDATE()),
+(4, N'Primer día en prácticas profesionales en la EMI.', '/uploads/publicaciones/main.png', GETDATE()),
+(4, N'Super contenta con mi equipo de trabajo, aprendiendo día a día.', '/uploads/publicaciones/main.png', GETDATE()),
 
 -- Usuario 5
-(5, N'Iniciando un nuevo proyecto de desarrollo en Python.', 'main.png', GETDATE()),
-(5, N'Probando herramientas de automatización con Selenium.', 'main.png', GETDATE()),
+(5, N'Iniciando un nuevo proyecto de desarrollo en Python.', '/uploads/publicaciones/main.png', GETDATE()),
+(5, N'Probando herramientas de automatización con Selenium.', '/uploads/publicaciones/main.png', GETDATE()),
 
 -- Usuario 6
-(6, N'Explorando la administración de servidores Linux.', 'main.png', GETDATE()),
-(6, N'Configuré un entorno de pruebas en Docker, muy útil.', 'main.png', GETDATE()),
+(6, N'Explorando la administración de servidores Linux.', '/uploads/publicaciones/main.png', GETDATE()),
+(6, N'Configuré un entorno de pruebas en Docker, muy útil.', '/uploads/publicaciones/main.png', GETDATE()),
 
 -- Usuario 7
-(7, N'Trabajando en un análisis de vulnerabilidades con Nmap.', 'main.png', GETDATE()),
-(7, N'Primera experiencia usando Metasploit en entornos controlados.', 'main.png', GETDATE()),
+(7, N'Trabajando en un análisis de vulnerabilidades con Nmap.', '/uploads/publicaciones/main.png', GETDATE()),
+(7, N'Primera experiencia usando Metasploit en entornos controlados.', '/uploads/publicaciones/main.png', GETDATE()),
 
 -- Usuario 8
-(8, N'Estudiando seguridad ofensiva con S4vitar.', 'main.png', GETDATE()),
-(8, N'Mi primer laboratorio en Hack The Box completado.', 'main.png', GETDATE()),
+(8, N'Estudiando seguridad ofensiva con S4vitar.', '/uploads/publicaciones/main.png', GETDATE()),
+(8, N'Mi primer laboratorio en Hack The Box completado.', '/uploads/publicaciones/main.png', GETDATE()),
 
 -- Usuario 9
-(9, N'Aprendiendo más sobre administración de bases de datos SQL Server.', 'main.png', GETDATE()),
-(9, N'Implementando triggers y stored procedures en proyectos.', 'main.png', GETDATE()),
+(9, N'Aprendiendo más sobre administración de bases de datos SQL Server.', '/uploads/publicaciones/main.png', GETDATE()),
+(9, N'Implementando triggers y stored procedures en proyectos.', '/uploads/publicaciones/main.png', GETDATE()),
 
 -- Usuario 10
-(10, N'Trabajando en un dashboard en Power BI para mi práctica.', 'main.png', GETDATE()),
-(10, N'Integrando datos desde API REST hacia mi sistema.', 'main.png', GETDATE()),
+(10, N'Trabajando en un dashboard en Power BI para mi práctica.', '/uploads/publicaciones/main.png', GETDATE()),
+(10, N'Integrando datos desde API REST hacia mi sistema.', '/uploads/publicaciones/main.png', GETDATE()),
 
 -- Usuario 11
-(11, N'Practicando desarrollo web con PHP y MySQL.', 'main.png', GETDATE()),
-(11, N'Construyendo mi primer sistema de gestión estudiantil.', 'main.png', GETDATE());
+(11, N'Practicando desarrollo web con PHP y MySQL.', '/uploads/publicaciones/main.png', GETDATE()),
+(11, N'Construyendo mi primer sistema de gestión estudiantil.', '/uploads/publicaciones/main.png', GETDATE());
 GO
