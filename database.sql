@@ -1,3 +1,6 @@
+DROP DATABASE linkdin_emi;
+GO
+
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'linkdin_emi')
 BEGIN
     CREATE DATABASE linkdin_emi;
@@ -9,7 +12,7 @@ GO
 CREATE TABLE [roles] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [nombre] varchar(50) UNIQUE NOT NULL,
-  [descripcion] text,
+  [descripcion] nvarchar(max),
   [creado_en] datetime
 )
 GO
@@ -17,7 +20,7 @@ GO
 CREATE TABLE [permisos] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [codigo] varchar(100) UNIQUE NOT NULL,
-  [descripcion] text
+  [descripcion] nvarchar(max)
 )
 GO
 
@@ -60,7 +63,7 @@ CREATE TABLE [secciones_plataforma] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [nombre] varchar(100) NOT NULL,
   [slug] varchar(100) UNIQUE NOT NULL,
-  [habilitada] bool DEFAULT (true),
+  habilitada bit DEFAULT 1,
   [actualizado_por] int,
   [actualizado_en] datetime
 )
@@ -70,7 +73,7 @@ CREATE TABLE [contenidos_estaticos] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [seccion_id] int NOT NULL,
   [titulo] varchar(150),
-  [contenido] text,
+  [contenido] nvarchar(max),
   [actualizado_por] int,
   [actualizado_en] datetime
 )
@@ -79,7 +82,7 @@ GO
 CREATE TABLE [categorias] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [nombre] varchar(100) NOT NULL,
-  [descripcion] text,
+  [descripcion] nvarchar(max),
   [creada_por] int,
   [creado_en] datetime
 )
@@ -89,26 +92,32 @@ CREATE TABLE [subcategorias] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [categoria_id] int NOT NULL,
   [nombre] varchar(100) NOT NULL,
-  [descripcion] text,
+  [descripcion] nvarchar(max),
   [creado_en] datetime
 )
 GO
 
 CREATE TABLE [ofertas] (
-  [id] int PRIMARY KEY IDENTITY(1, 1),
-  [usuario_id] int NOT NULL,
-  [categoria_id] int,
-  [subcategoria_id] int,
-  [titulo] varchar(150) NOT NULL,
-  [descripcion] text,
-  [ubicacion] varchar(100),
-  [tipo_jornada] varchar(50),
-  [modalidad] varchar(50),
-  [documento_adj] varchar(255),
-  [estado] varchar(20) DEFAULT 'en_revision',
-  [publicado_en] datetime,
-  [actualizado_en] datetime
-)
+    [id] int PRIMARY KEY IDENTITY(1,1),
+    [usuario_id] int NOT NULL,               -- quien publica la oferta
+    [categoria_id] int,                       -- área principal (Tecnología, Administración, etc.)
+    [subcategoria_id] int,                    -- sub-área (Desarrollo Web, Soporte/TI, etc.)
+    [titulo] varchar(150) NOT NULL,          -- nombre del puesto
+    [descripcion] nvarchar(max),             -- descripción completa del puesto
+    [ubicacion] varchar(100),                -- ciudad/país o "remoto"
+    [tipo_jornada] varchar(50),              -- completa, media, remoto
+    [modalidad] varchar(50),                 -- presencial, remoto, híbrido
+    [experiencia_min] int,                    -- años mínimos de experiencia
+    [salario_min] decimal(12,2),             -- salario mínimo (opcional)
+    [salario_max] decimal(12,2),             -- salario máximo (opcional)
+    [beneficios] nvarchar(max),              -- lista de beneficios
+    [documento_adj] varchar(255),            -- archivo adjunto (PDF, etc.)
+    [estado] varchar(20) DEFAULT 'en_revision', -- estado de la oferta
+    [publicado_en] datetime,                 -- fecha de publicación
+    [actualizado_en] datetime,               -- fecha de actualización
+    [contacto_reclutador] varchar(150),      -- email o teléfono del reclutador
+    [imagen_empresa] varchar(255)            -- logo o imagen del anunciante
+);
 GO
 
 CREATE TABLE [postulaciones] (
@@ -117,7 +126,7 @@ CREATE TABLE [postulaciones] (
   [usuario_id] int NOT NULL,
   [estado] varchar(20) DEFAULT 'en_revision',
   [calificacion] int,
-  [mensaje] text,
+  [mensaje] nvarchar(max),
   [creado_en] datetime
 )
 GO
@@ -125,7 +134,7 @@ GO
 CREATE TABLE [publicaciones] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [usuario_id] int NOT NULL,
-  [contenido] text,
+  [contenido] nvarchar(max),
   [imagen] varchar(255),
   [creado_en] datetime
 )
@@ -135,7 +144,7 @@ CREATE TABLE [comentarios] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [publicacion_id] int NOT NULL,
   [usuario_id] int NOT NULL,
-  [comentario] text NOT NULL,
+  [comentario] nvarchar(max) NOT NULL,
   [creado_en] datetime
 )
 GO
@@ -153,7 +162,7 @@ CREATE TABLE [actividades] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [usuario_id] int NOT NULL,
   [accion] varchar(100) NOT NULL,
-  [descripcion] text,
+  [descripcion] nvarchar(max),
   [ip] varchar(50),
   [creado_en] datetime
 )
@@ -163,8 +172,8 @@ CREATE TABLE [alertas_seguridad] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [usuario_id] int NOT NULL,
   [tipo] varchar(100) NOT NULL,
-  [detalle] text,
-  [atendido] bool DEFAULT (false),
+  [detalle] nvarchar(max),
+  atendido bit DEFAULT 0,
   [creado_en] datetime
 )
 GO

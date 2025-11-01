@@ -1,3 +1,39 @@
+<?php
+require_once __DIR__ . '/config/database.php'; // CORRECTO si config está en la raíz
+
+// FILTROS
+$ubicacion = $_GET['ubicacion'] ?? '';
+$jornada = $_GET['jornada'] ?? [];
+$experiencia = $_GET['experiencia'] ?? '';
+
+// Construir query dinámico
+$sql = "SELECT o.*, u.nombre AS empresa, u.foto AS logo_empresa
+        FROM ofertas o
+        JOIN usuarios u ON o.usuario_id = u.id
+        WHERE 1=1";
+
+$params = [];
+
+if (!empty($ubicacion)) {
+    $sql .= " AND o.ubicacion LIKE :ubicacion";
+    $params[':ubicacion'] = "%$ubicacion%";
+}
+
+if (!empty($jornada)) {
+    $sql .= " AND o.tipo_jornada IN (" . implode(',', array_fill(0, count($jornada), '?')) . ")";
+    $params = array_merge($params, $jornada);
+}
+
+if (!empty($experiencia)) {
+    $sql .= " AND o.experiencia_min <= ?";
+    $params[] = $experiencia;
+}
+
+$stmt = $conn->prepare($sql);
+$stmt->execute($params);
+$ofertas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,8 +45,40 @@
     <link rel="stylesheet" href="/public/css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Lobster&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&family=Share+Tech&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Arvo:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Básicos para mostrar lado izquierdo y derecho */
+        .empleo {
+            display: flex;
+            gap: 20px;
+        }
 
+      
+
+        .plo {
+            cursor: pointer;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .plo img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+        }
+
+        .btn-btn {
+            padding: 5px 10px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+    </style>
 </head>
 
 <body>
@@ -18,125 +86,101 @@
 
     <div class="filtros">
         <h2>Filtros de búsqueda</h2>
+        <form method="GET">
+            <label for="ubicacion">Ubicación:</label>
+            <select id="ubicacion" name="ubicacion">
+                <option value="">Todas</option>
+                <option value="Bolivia" <?= $ubicacion == 'Bolivia' ? 'selected' : '' ?>>Bolivia</option>
+                <option value="Perú" <?= $ubicacion == 'Perú' ? 'selected' : '' ?>>Perú</option>
+                <option value="Chile" <?= $ubicacion == 'Chile' ? 'selected' : '' ?>>Chile</option>
+            </select>
 
-        <!-- Filtro por ubicación -->
-        <label for="ubicacion">Ubicación:</label>
-        <select id="ubicacion" name="ubicacion">
-            <option value="">Todas</option>
-            <option value="bolivia">Bolivia</option>
-            <option value="peru">Perú</option>
-            <option value="chile">Chile</option>
-        </select>
+            <fieldset>
+                <legend>Jornada:</legend>
+                <label><input type="checkbox" name="jornada[]" value="completa" <?= in_array('completa', $jornada) ? 'checked' : '' ?>> Completa</label>
+                <label><input type="checkbox" name="jornada[]" value="media" <?= in_array('media', $jornada) ? 'checked' : '' ?>> Media jornada</label>
+                <label><input type="checkbox" name="jornada[]" value="remoto" <?= in_array('remoto', $jornada) ? 'checked' : '' ?>> Remoto</label>
+            </fieldset>
 
-        <!-- Filtro por tipo de jornada -->
-        <fieldset>
-            <legend>Jornada:</legend>
-            <label><input type="checkbox" name="jornada" value="completa"> Completa</label>
-            <label><input type="checkbox" name="jornada" value="media"> Media jornada</label>
-            <label><input type="checkbox" name="jornada" value="remoto"> Remoto</label>
-        </fieldset>
+            <label for="experiencia">Años de experiencia:</label>
+            <input type="number" id="experiencia" name="experiencia" min="0" max="50" value="<?= htmlspecialchars($experiencia) ?>">
 
-        <!-- Filtro por experiencia -->
-        <label for="experiencia">Años de experiencia:</label>
-        <input type="number" id="experiencia" name="experiencia" min="0" max="20" placeholder="0+">
-
-        <!-- Botón para aplicar filtros -->
-        <button class="btn-btn">Aplicar filtros</button>
+            <button class="btn-btn" type="submit">Aplicar filtros</button>
+        </form>
     </div>
 
     <main class="empleo">
         <section class="empleo-izquierdo io">
             <div>
                 <p>Principales Empleos que te recomienda la Emi</p>
-                <p>En función de tu perfil, preferencias y actividad como solicitudes, búsquedas y contenido guardado.</p>
-                <p>400 resultados</p>
+                <p>En función de tu perfil y actividad.</p>
+                <p><?= count($ofertas) ?> resultados</p>
             </div>
-            <div class="plo">
-                <img src="public/img/main.png" alt="">
-                <div>
-                    <p>Real Estate Rental Virtual AssistantReal Estate Rental Virtual Assistant</p>
-                    <p>The Link Housing</p>
-                    <p>Bolivia (remoto)</p>
-                    <p class="btn-btn">Favorito</p>
-                </div>
-            </div>
-        </section>
-        <section class="empleo-derecho io">
-            <input type="submit" value="Postularse" class="btn-btn">
-            <p>Real Estate Rental Virtual Assistant</p>
-            <p>Bolivia · hace 1 mes · Más de 100 solicitudes</p>
-            <div>
-                <p>En remoto</p>
-                <p>Jornada Completa</p>
-                <p>Solicitud sencilla</p>
-            </div>
-            <div>
-                <p>Conoce al equipo de contratación</p>
-                <div>
-                    <img src="public/img/image.png" alt="">
+
+            <?php foreach ($ofertas as $o): ?>
+                <div class="plo oferta-item"
+                    data-titulo="<?= htmlspecialchars($o['titulo'], ENT_QUOTES) ?>"
+                    data-ubicacion="<?= htmlspecialchars($o['ubicacion'], ENT_QUOTES) ?>"
+                    data-modalidad="<?= htmlspecialchars($o['modalidad'], ENT_QUOTES) ?>"
+                    data-jornada="<?= htmlspecialchars($o['tipo_jornada'], ENT_QUOTES) ?>"
+                    data-empresa="<?= htmlspecialchars($o['empresa'], ENT_QUOTES) ?>"
+                    data-logo="<?= $o['logo_empresa'] ?: 'image.png' ?>"
+                    data-descripcion="<?= htmlspecialchars($o['descripcion'], ENT_QUOTES) ?>">
+                    <img src="/public/img/<?= $o['logo_empresa'] ?: 'main.png' ?>" alt="">
                     <div>
-                        <p>Jeremy Garcia</p>
-                        <p>Real Estate Investor and Housing Solutions</p>
-                        <p>Anunciante del empleo</p>
+                        <p><?= htmlspecialchars($o['titulo']) ?></p>
+                        <p><?= htmlspecialchars($o['empresa']) ?></p>
+                        <p><?= htmlspecialchars($o['ubicacion']) ?></p>
+                        <p class="btn-btn">Favorito</p>
                     </div>
                 </div>
-            </div>
-            <p>Acerca del empleo</p>
-            <p>About Us: The Link Housing is a dynamic and rapidly growing real estate company dedicated to providing exceptional rental properties to our clients. We pride ourselves on our commitment to excellence and our passion for helping individuals and families find their perfect home.
-
-
-                Job Description:
-                We are seeking a highly motivated and detail-oriented Virtual Assistant to join our team. As a Virtual Assistant, you will play a key role in our real estate operations by assisting with the acquisition of homes for rent. This is a remote position with flexible hours within the Eastern Time Zone.
-
-
-                Responsibilities:
-
-
-                Make phone calls to potential homeowners to inquire about listing their properties for rent.
-                Gather and organize relevant information using Google Sheets and Monday.com.
-                Assist with administrative tasks and documentation related to property acquisition.
-                Provide excellent customer service to homeowners and potential clients.
-
-
-                Key Responsibilities:
-
-
-                Source suitable housing options within a 10-mile radius of the displaced residence using platforms like Airbnb, Zillow, and Furnished Finder.
-                Utilize Google Maps to center searches on target locations, ensuring proximity, quality, and availability.
-                Conduct outbound calls to property owners and landlords to negotiate rental agreements and advocate for displaced families.
-                Submit accurate, comprehensive property listings for internal review, including pricing, amenities, location, and owner contact information.
-                Maintain a high standard of professionalism in written and spoken English when communicating with landlords and internal teams.
-                Accurately log and track submissions and activities using Google Sheets, Google Docs, and Monday.com.
-                Work efficiently in a fast-paced environment, balancing speed, accuracy, and customer satisfaction.
-                Apply negotiation and sales skills to encourage property owners to list their homes for temporary housing.
-
-
-                Key Skills & Requirements:
-                Proficiency with Google Workspace (Docs, Sheets, Maps)
-                Strong experience using OTA (Online Travel Agency) platforms: Airbnb, Furnished Finder, Zillow
-                Excellent understanding of geolocation and map-based search techniques
-                Strong communication skills – both verbal and written (professional English)
-                Ability to work independently and manage time across multiple cases
-                Knowledge of Monday.com or similar project management tools
-                Sales and negotiation experience is essential
-                Must be available to work Pacific Standard Time (PST) hours
-
-
-                Ideal Candidate:
-
-
-                You are tech-savvy, detail-focused, and mission-driven. You’re passionate about helping families in need, and you thrive in a remote, fast-paced environment where accuracy, speed, and empathy matter. You’re also proactive, highly organized, and confident in negotiating terms with landlords.
-
-
-                Requirements:
-                Strong English communication skills and comfortable making phone calls.
-                Proficiency in Google Sheets or similar spreadsheet software.
-                Detail-oriented with excellent organizational skills.
-                Ability to work independently and prioritize tasks effectively.</p>
-
+            <?php endforeach; ?>
         </section>
 
+        <section class="empleo-derecho io" id="detalle-oferta">
+            <?php if (!empty($ofertas[0])):
+                $o = $ofertas[0]; ?>
+                <input type="submit" value="Postularse" class="btn-btn">
+                <p id="titulo"><?= htmlspecialchars($o['titulo']) ?></p>
+                <p id="ubicacion"><?= htmlspecialchars($o['ubicacion']) ?> · hace 1 mes · Más de 100 solicitudes</p>
+                <div>
+                    <p id="modalidad"><?= ucfirst($o['modalidad']) ?></p>
+                    <p id="jornada">Jornada <?= ucfirst($o['tipo_jornada']) ?></p>
+                    <p>Solicitud sencilla</p>
+                </div>
+                <div>
+                    <p>Conoce al equipo de contratación</p>
+                    <div>
+                        <img id="logo_empresa" src="/public/img/<?= $o['logo_empresa'] ?: 'image.png' ?>" alt="">
+                        <div>
+                            <p id="empresa"><?= htmlspecialchars($o['empresa']) ?></p>
+                            <p>Anunciante del empleo</p>
+                        </div>
+                    </div>
+                </div>
+                <p>Acerca del empleo</p>
+                <p id="descripcion"><?= nl2br(htmlspecialchars($o['descripcion'])) ?></p>
+            <?php else: ?>
+                <p>No hay ofertas disponibles.</p>
+            <?php endif; ?>
+        </section>
     </main>
+
+    <script>
+        // Click en oferta para actualizar detalle
+        document.querySelectorAll('.oferta-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.getElementById('titulo').textContent = item.dataset.titulo;
+                document.getElementById('ubicacion').textContent = item.dataset.ubicacion + ' · hace 1 mes · Más de 100 solicitudes';
+                document.getElementById('modalidad').textContent = item.dataset.modalidad;
+                document.getElementById('jornada').textContent = 'Jornada ' + item.dataset.jornada;
+                document.getElementById('empresa').textContent = item.dataset.empresa;
+                document.getElementById('logo_empresa').src = '/public/img/' + item.dataset.logo;
+                document.getElementById('descripcion').innerHTML = item.dataset.descripcion.replace(/\n/g, "<br>");
+            });
+        });
+    </script>
+
     <?php include 'views/cabeza/footer.php'; ?>
 </body>
 

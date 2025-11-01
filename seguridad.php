@@ -1,172 +1,173 @@
+<?php
+session_start();
+require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/config/funcion_db.php';
+require_once __DIR__ . '/views/cabeza/header.php';
+
+// Solo admin
+verificarSesion();
+if ($_SESSION['rol'] != 1) {
+    header("Location: /views/usuario/login.php");
+    exit();
+}
+
+// ---------- REGISTRAR ACTIVIDAD ----------
+if (isset($_POST['registrar_actividad'])) {
+    $detalle = $_POST['detalle'] ?? '';
+    if ($detalle != '') {
+        dbExecute("INSERT INTO actividades (usuario_id, detalle, creado_en) VALUES (?, ?, GETDATE())", [$_SESSION['usuario_id'], $detalle]);
+    }
+}
+
+// ---------- GUARDAR PERMISOS ----------
+if (isset($_POST['guardar_permisos'])) {
+    $rol = $_POST['rol'] ?? '';
+    $permisos = $_POST['permisos'] ?? [];
+    // Primero borramos permisos antiguos
+    dbExecute("DELETE FROM permisos_roles WHERE rol = ?", [$rol]);
+    foreach ($permisos as $p) {
+        dbExecute("INSERT INTO permisos_roles (rol, permiso_codigo) VALUES (?, ?)", [$rol, $p]);
+    }
+}
+
+// ---------- GUARDAR POLÍTICAS ----------
+if (isset($_POST['guardar_politicas'])) {
+    $texto = $_POST['politicas'] ?? '';
+    dbExecute("INSERT INTO politicas_privacidad (contenido, actualizado_por, actualizado_en) VALUES (?, ?, GETDATE())", [$texto, $_SESSION['usuario_id']]);
+}
+
+// ---------- SIMULAR ALERTA ----------
+if (isset($_POST['simular_alerta'])) {
+    $detalle = "Acceso sospechoso detectado";
+    dbExecute("INSERT INTO alertas_seguridad (usuario_id, detalle, creado_en) VALUES (?, ?, GETDATE())", [$_SESSION['usuario_id'], $detalle]);
+}
+
+// ---------- OBTENER DATOS ----------
+$actividades = dbSelect("SELECT TOP 10 a.*, u.nombre FROM actividades a INNER JOIN usuarios u ON u.id=a.usuario_id ORDER BY a.creado_en DESC");
+$alertas = dbSelect("SELECT TOP 10 * FROM alertas_seguridad ORDER BY creado_en DESC");
+
+// Para permisos por rol
+$permisosRoles = [
+    'admin' => dbSelect("SELECT permiso_codigo FROM permisos_roles WHERE rol='admin'"),
+    'editor' => dbSelect("SELECT permiso_codigo FROM permisos_roles WHERE rol='editor'"),
+    'usuario' => dbSelect("SELECT permiso_codigo FROM permisos_roles WHERE rol='usuario'")
+];
+?>
+
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seguridad y Privacidad</title>
     <link rel="stylesheet" href="/public/css/normalize.css">
     <link rel="stylesheet" href="/public/css/styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Lobster&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&family=Share+Tech&display=swap" rel="stylesheet">
-
 </head>
-
 <body>
-    <?php include __DIR__ . '/views/cabeza/header.php'; ?>
 
-    <main class="seguridad-privacidad">
-        <h1>Seguridad y Privacidad / Security & Privacy</h1>
+<main class="seguridad-privacidad mar">
+    <h1>Seguridad y Privacidad</h1>
 
-        <!-- Botones principales -->
-        <div class="acciones">
-            <button onclick="toggleSeccion('autenticacion')">Autenticación Segura</button>
-            <button onclick="toggleSeccion('cifrado')">Cifrado de Contraseñas</button>
-            <button onclick="toggleSeccion('registro')">Registro de Actividad</button>
-            <button onclick="toggleSeccion('permisos')">Permisos por Rol</button>
-            <button onclick="toggleSeccion('politicas')">Políticas de Privacidad</button>
-            <button onclick="toggleSeccion('notificaciones')">Notificación de Accesos</button>
-        </div>
+    <div class="acciones">
+        <button onclick="toggleSeccion('autenticacion')">Autenticación Segura</button>
+        <button onclick="toggleSeccion('cifrado')">Cifrado de Contraseñas</button>
+        <button onclick="toggleSeccion('registro')">Registro de Actividad</button>
+        <button onclick="toggleSeccion('permisos')">Permisos por Rol</button>
+        <button onclick="toggleSeccion('politicas')">Políticas</button>
+        <button onclick="toggleSeccion('notificaciones')">Notificaciones</button>
+    </div>
 
-        <!-- Sección Autenticación Segura -->
-        <div id="autenticacion" style="display:block; margin-top:1rem;">
-            <h2>Autenticación Segura</h2>
-            <p>Los usuarios deben iniciar sesión con un sistema seguro de autenticación.</p>
+    <!-- AUTENTICACIÓN -->
+    <div id="autenticacion" style="display:block; margin-top:1rem;">
+        <h2>Autenticación Segura</h2>
+        <p>Usuarios deben iniciar sesión con un sistema seguro.</p>
+        <form method="POST">
             <label>Usuario:</label>
-            <input type="text" placeholder="Ingrese su usuario">
-            <label>Contraseña:</label>
-            <input type="password" placeholder="Ingrese su contraseña">
-            <label>Confirmar contraseña:</label>
-            <input type="password" placeholder="Confirme contraseña">
-            <button onclick="loginTest()">Probar Login</button>
-            <p id="loginMsg" style="color:green;"></p>
-        </div>
+            <input type="text" name="detalle" placeholder="Ingrese acción">
+            <button name="registrar_actividad">Registrar Actividad</button>
+        </form>
+        <ul>
+            <?php foreach($actividades as $a): ?>
+                <li><?= htmlspecialchars($a['nombre'] . ' - ' . $a['detalle'] . ' (' . $a['creado_en'] . ')') ?></li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
 
-        <!-- Sección Cifrado -->
-        <div id="cifrado" style="display:none; margin-top:1rem;">
-            <h2>Cifrado de Contraseñas y Datos Sensibles</h2>
-            <p>Simulación de cifrado de datos sensibles:</p>
-            <input type="text" placeholder="Texto a cifrar" id="textoCifrar">
-            <button onclick="cifrarTexto()">Cifrar</button>
-            <p id="resultadoCifrado" style="color:blue;"></p>
-        </div>
+    <!-- CIFRADO -->
+    <div id="cifrado" style="display:none; margin-top:1rem;">
+        <h2>Cifrado de Contraseñas</h2>
+        <form method="POST">
+            <input type="text" id="textoCifrar" placeholder="Texto a cifrar">
+            <button type="button" onclick="cifrarTexto()">Cifrar</button>
+        </form>
+        <p id="resultadoCifrado" style="color:blue;"></p>
+    </div>
 
-        <!-- Sección Registro de Actividad -->
-        <div id="registro" style="display:none; margin-top:1rem;">
-            <h2>Registro de Actividad</h2>
-            <p>Lista de actividades recientes del usuario:</p>
-            <ul id="actividadLista">
-                <li>Usuario inició sesión</li>
-                <li>Cambió contraseña</li>
-                <li>Actualizó perfil</li>
-            </ul>
-            <button onclick="agregarActividad()">Agregar actividad</button>
-        </div>
-
-        <!-- Sección Permisos por Rol -->
-        <div id="permisos" style="display:none; margin-top:1rem;">
-            <h2>Configuración de Permisos por Rol</h2>
-            <p>Asignar permisos a diferentes roles:</p>
+    <!-- PERMISOS POR ROL -->
+    <div id="permisos" style="display:none; margin-top:1rem;">
+        <h2>Permisos por Rol</h2>
+        <form method="POST">
             <label>Seleccionar rol:</label>
-            <select id="rolSelect" onchange="mostrarPermisos()">
+            <select name="rol" id="rolSelect" onchange="mostrarPermisos()">
                 <option value="admin">Administrador</option>
                 <option value="editor">Editor</option>
                 <option value="usuario">Usuario</option>
             </select>
-            <div id="permisosRol" style="margin-top:1rem;">
-                <p>Permisos del rol seleccionado se mostrarán aquí</p>
-            </div>
-            <button onclick="guardarPermisos()">Guardar Permisos</button>
-        </div>
+            <div id="permisosRol" style="margin-top:1rem;"></div>
+            <input type="hidden" name="permisos[]" id="permisosInput">
+            <button name="guardar_permisos">Guardar Permisos</button>
+        </form>
+    </div>
 
-        <!-- Sección Políticas de Privacidad -->
-        <div id="politicas" style="display:none; margin-top:1rem;">
-            <h2>Políticas de Privacidad y Manejo de Datos</h2>
-            <textarea rows="6" cols="50">Texto de políticas de privacidad...</textarea><br>
-            <button onclick="guardarPoliticas()">Guardar Políticas</button>
-            <p id="politicaMsg" style="color:green;"></p>
-        </div>
+    <!-- POLÍTICAS -->
+    <div id="politicas" style="display:none; margin-top:1rem;">
+        <h2>Políticas de Privacidad</h2>
+        <form method="POST">
+            <textarea name="politicas" rows="6" cols="50">Texto de políticas...</textarea><br>
+            <button name="guardar_politicas">Guardar</button>
+        </form>
+    </div>
 
-        <!-- Sección Notificación de accesos -->
-        <div id="notificaciones" style="display:none; margin-top:1rem;">
-            <h2>Notificación de Accesos Sospechosos</h2>
-            <p>Simulación de alertas de seguridad:</p>
-            <button onclick="simularAcceso()">Simular Acceso Sospechoso</button>
-            <ul id="alertasLista" style="color:red;"></ul>
-        </div>
-    </main>
+    <!-- NOTIFICACIONES -->
+    <div id="notificaciones" style="display:none; margin-top:1rem;">
+        <h2>Alertas de Seguridad</h2>
+        <form method="POST">
+            <button name="simular_alerta">Simular Acceso Sospechoso</button>
+        </form>
+        <ul style="color:red;">
+            <?php foreach($alertas as $al): ?>
+                <li><?= htmlspecialchars($al['detalle'] . ' - ' . $al['creado_en']) ?></li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+</main>
 
-    <?php include __DIR__ . '/views/cabeza/footer.php'; ?>
+<?php include __DIR__ . '/views/cabeza/footer.php'; ?>
 
-    <script>
-        // Función para mostrar/ocultar secciones
-        function toggleSeccion(id) {
-            const secciones = ['autenticacion', 'cifrado', 'registro', 'permisos', 'politicas', 'notificaciones'];
-            secciones.forEach(sec => {
-                document.getElementById(sec).style.display = (sec === id ? 'block' : 'none');
-            });
-        }
+<script>
+function toggleSeccion(id){
+    const secciones = ['autenticacion','cifrado','registro','permisos','politicas','notificaciones'];
+    secciones.forEach(sec => document.getElementById(sec).style.display = (sec===id?'block':'none'));
+}
 
-        // Función login de prueba
-        function loginTest() {
-            const loginMsg = document.getElementById('loginMsg');
-            loginMsg.innerText = 'Login simulado exitoso!';
-        }
+function cifrarTexto(){
+    const texto = document.getElementById('textoCifrar').value;
+    document.getElementById('resultadoCifrado').innerText = 'Texto cifrado (Base64): ' + btoa(texto);
+}
 
-        // Función de cifrado simulado
-        function cifrarTexto() {
-            const texto = document.getElementById('textoCifrar').value;
-            const resultado = btoa(texto); // Base64 como ejemplo
-            document.getElementById('resultadoCifrado').innerText = 'Texto cifrado: ' + resultado;
-        }
+// Permisos por rol dinámicos
+const permisosRoles = <?= json_encode(array_map(fn($v)=>array_map(fn($p)=>$p['permiso_codigo'],$v), $permisosRoles)) ?>;
 
-        // Registro de actividad
-        function agregarActividad() {
-            const lista = document.getElementById('actividadLista');
-            const fecha = new Date().toLocaleString();
-            const li = document.createElement('li');
-            li.innerText = `Actividad simulada - ${fecha}`;
-            lista.appendChild(li);
-        }
-
-        // Permisos por rol
-        const permisosRoles = {
-            admin: ['Crear', 'Editar', 'Eliminar', 'Ver'],
-            editor: ['Editar', 'Ver'],
-            usuario: ['Ver']
-        };
-
-        function mostrarPermisos() {
-            const rol = document.getElementById('rolSelect').value;
-            const div = document.getElementById('permisosRol');
-            div.innerHTML = '';
-            permisosRoles[rol].forEach(p => {
-                const pEl = document.createElement('p');
-                pEl.innerText = p;
-                div.appendChild(pEl);
-            });
-        }
-
-        function guardarPermisos() {
-            alert('Permisos guardados (simulado)');
-        }
-
-        // Políticas de privacidad
-        function guardarPoliticas() {
-            document.getElementById('politicaMsg').innerText = 'Políticas guardadas exitosamente!';
-        }
-
-        // Simulación de accesos sospechosos
-        function simularAcceso() {
-            const lista = document.getElementById('alertasLista');
-            const fecha = new Date().toLocaleString();
-            const li = document.createElement('li');
-            li.innerText = `Acceso sospechoso detectado - ${fecha}`;
-            lista.appendChild(li);
-        }
-    </script>
+function mostrarPermisos(){
+    const rol = document.getElementById('rolSelect').value;
+    const div = document.getElementById('permisosRol');
+    div.innerHTML = '';
+    if(permisosRoles[rol]){
+        permisosRoles[rol].forEach(p=>{
+            const pEl = document.createElement('p'); pEl.innerText = p; div.appendChild(pEl);
+        });
+    }
+}
+</script>
 
 </body>
-
 </html>

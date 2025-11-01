@@ -1,153 +1,208 @@
+<?php
+session_start();
+require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/config/funcion_db.php';
+require_once __DIR__ . '/views/cabeza/header.php';
+
+// Solo admin
+verificarSesion();
+if ($_SESSION['rol'] != 1) {
+    header("Location: /views/usuario/login.php");
+    exit();
+}
+
+// -------------------- GUARDAR PARÁMETROS --------------------
+if (isset($_POST['guardar_parametros'])) {
+    $nombre = $_POST['nombre'] ?? '';
+    $correo = $_POST['correo'] ?? '';
+    $zona = $_POST['zona'] ?? '';
+    dbExecute("UPDATE parametros_plataforma SET nombre=?, correo_contacto=?, zona_horaria=?, creado_por=?, creado_en=GETDATE()",
+              [$nombre, $correo, $zona, $_SESSION['usuario_id']]);
+}
+
+// -------------------- ACTUALIZAR SECCIONES --------------------
+if (isset($_POST['guardar_secciones'])) {
+    $ids = $_POST['secciones'] ?? [];
+    // Deshabilitar todas
+    dbExecute("UPDATE secciones_plataforma SET habilitada=0");
+    // Habilitar seleccionadas
+    foreach ($ids as $id) {
+        dbExecute("UPDATE secciones_plataforma SET habilitada=1 WHERE id=?", [$id]);
+    }
+}
+
+// -------------------- AGREGAR CATEGORÍA --------------------
+if (isset($_POST['agregar_categoria'])) {
+    $nombre = trim($_POST['categoria']);
+    $subs = explode(',', $_POST['subcategorias']);
+    if ($nombre != '') {
+        dbExecute("INSERT INTO categorias (nombre, descripcion, creada_por, creado_en) VALUES (?, ?, ?, GETDATE())",
+                  [$nombre, '', $_SESSION['usuario_id']]);
+        $catId = dbLastId();
+        foreach ($subs as $s) {
+            $s = trim($s);
+            if ($s != '') dbExecute("INSERT INTO subcategorias (categoria_id, nombre, descripcion, creado_en) VALUES (?, ?, '', GETDATE())", [$catId, $s]);
+        }
+    }
+}
+
+// -------------------- GUARDAR CONTENIDO ESTÁTICO --------------------
+if (isset($_POST['guardar_contenido'])) {
+    $titulo = $_POST['titulo'] ?? '';
+    $contenido = $_POST['contenido'] ?? '';
+    dbExecute("INSERT INTO contenidos_estaticos (seccion_id, titulo, contenido, actualizado_por, actualizado_en)
+               VALUES (3, ?, ?, ?, GETDATE())",
+              [$titulo, $contenido, $_SESSION['usuario_id']]);
+}
+
+// -------------------- APROBAR / RECHAZAR OFERTA --------------------
+if (isset($_POST['cambiar_estado'])) {
+    $id = $_POST['id_oferta'];
+    $nuevo = $_POST['nuevo_estado'];
+    dbExecute("UPDATE ofertas SET estado=?, actualizado_en=GETDATE() WHERE id=?", [$nuevo, $id]);
+}
+
+// -------------------- DATOS PARA MOSTRAR --------------------
+$param = dbSelectOne("SELECT TOP 1 * FROM parametros_plataforma");
+$ofertas = dbSelect("SELECT o.id, o.titulo, u.nombre AS empresa, o.estado
+                     FROM ofertas o
+                     INNER JOIN usuarios u ON o.usuario_id=u.id
+                     ORDER BY o.publicado_en DESC");
+$secciones = dbSelect("SELECT * FROM secciones_plataforma");
+$categorias = dbSelect("SELECT * FROM categorias");
+$subcategorias = dbSelect("SELECT * FROM subcategorias");
+?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administracion</title>
+    <title>Administración</title>
     <link rel="stylesheet" href="/public/css/normalize.css">
     <link rel="stylesheet" href="/public/css/styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Lobster&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&family=Share+Tech&display=swap" rel="stylesheet">
-
 </head>
-
 <body>
-    <?php include __DIR__ . '/views/cabeza/header.php'; ?> 
-    <main class="admin-plataforma mar">
-
+<main class="admin-plataforma mar">
     <h2>Administración de la Plataforma</h2>
 
-    <!-- Botones principales -->
+    <!-- Botones -->
     <div class="acciones">
-        <button onclick="toggleSeccion('parametros')">Configurar Parámetros Generales</button>
-        <button onclick="toggleSeccion('revisarOfertas')">Revisar y Aprobar Ofertas</button>
-        <button onclick="toggleSeccion('habilitarSecciones')">Habilitar/Deshabilitar Secciones</button>
-        <button onclick="toggleSeccion('categorias')">Gestionar Categorías/Subcategorías</button>
-        <button onclick="toggleSeccion('contenido')">Gestionar Contenido Estático</button>
-        <a  href="seguridad.php"><button>Configurar Seguridad</button></a>
+        <button onclick="toggleSeccion('parametros')">Configurar Parámetros</button>
+        <button onclick="toggleSeccion('revisarOfertas')">Revisar Ofertas</button>
+        <button onclick="toggleSeccion('habilitarSecciones')">Secciones</button>
+        <button onclick="toggleSeccion('categorias')">Categorías</button>
+        <button onclick="toggleSeccion('contenido')">Contenido Estático</button>
+        <a href="seguridad.php"><button>Seguridad</button></a>
     </div>
 
-    <!-- Sección Configurar Parámetros Generales -->
+    <!-- ================== PARÁMETROS ================== -->
     <div id="parametros" style="display:none; margin-top:1rem;">
-        <h3>Configurar Parámetros Generales</h3>
-        <label>Nombre de la Plataforma:</label>
-        <input type="text" placeholder="Nombre actual">
-        <label>Correo de contacto:</label>
-        <input type="email" placeholder="contacto@plataforma.com">
-        <label>Zona horaria:</label>
-        <select>
-            <option>GMT-4</option>
-            <option>GMT-3</option>
-            <option>GMT-5</option>
-        </select>
-        <button>Guardar Parámetros</button>
+        <h3>Parámetros Generales</h3>
+        <form method="POST">
+            <label>Nombre:</label>
+            <input type="text" name="nombre" value="<?= htmlspecialchars($param['nombre'] ?? '') ?>">
+            <label>Correo:</label>
+            <input type="email" name="correo" value="<?= htmlspecialchars($param['correo_contacto'] ?? '') ?>">
+            <label>Zona horaria:</label>
+            <input type="text" name="zona" value="<?= htmlspecialchars($param['zona_horaria'] ?? 'GMT-4') ?>">
+            <button name="guardar_parametros">Guardar Parámetros</button>
+        </form>
     </div>
 
-    <!-- Sección Revisar y Aprobar Ofertas -->
+    <!-- ================== REVISAR OFERTAS ================== -->
     <div id="revisarOfertas" style="display:none; margin-top:1rem;">
         <h3>Revisar y Aprobar Ofertas</h3>
         <table border="1" cellpadding="5" cellspacing="0">
             <thead>
-                <tr>
-                    <td>Oferta</td>
-                    <td>Empresa</td>
-                    <td>Estado</td>
-                    <td>Acciones</td>
-                </tr>
+                <tr><th>Oferta</th><th>Empresa</th><th>Estado</th><th>Acciones</th></tr>
             </thead>
             <tbody>
+            <?php foreach ($ofertas as $o): ?>
                 <tr>
-                    <td>Asistente Virtual</td>
-                    <td>The Link Housing</td>
-                    <td>En revisión</td>
+                    <td><?= htmlspecialchars($o['titulo']) ?></td>
+                    <td><?= htmlspecialchars($o['empresa']) ?></td>
+                    <td><?= htmlspecialchars($o['estado']) ?></td>
                     <td>
-                        <button onclick="aprobar(this)">Aprobar</button>
-                        <button onclick="rechazar(this)">Rechazar</button>
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="id_oferta" value="<?= $o['id'] ?>">
+                            <input type="hidden" name="nuevo_estado" value="aprobado">
+                            <button name="cambiar_estado">Aprobar</button>
+                        </form>
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="id_oferta" value="<?= $o['id'] ?>">
+                            <input type="hidden" name="nuevo_estado" value="rechazado">
+                            <button name="cambiar_estado">Rechazar</button>
+                        </form>
                     </td>
                 </tr>
-                <tr>
-                    <td>Marketing Specialist</td>
-                    <td>Empresa XYZ</td>
-                    <td>En revisión</td>
-                    <td>
-                        <button onclick="aprobar(this)">Aprobar</button>
-                        <button onclick="rechazar(this)">Rechazar</button>
-                    </td>
-                </tr>
+            <?php endforeach; ?>
             </tbody>
         </table>
     </div>
 
-    <!-- Sección Habilitar/Deshabilitar Secciones -->
+    <!-- ================== SECCIONES ================== -->
     <div id="habilitarSecciones" style="display:none; margin-top:1rem;">
-        <h3>Habilitar o Deshabilitar Secciones</h3>
-        <label><input type="checkbox" checked> Gestión de Usuarios</label><br>
-        <label><input type="checkbox" checked> Publicación de Convocatorias</label><br>
-        <label><input type="checkbox"> Búsqueda de Ofertas</label><br>
-        <label><input type="checkbox"> Administración de Plataforma</label><br>
-        <button>Guardar Cambios</button>
+        <h3>Habilitar / Deshabilitar Secciones</h3>
+        <form method="POST">
+        <?php foreach ($secciones as $s): ?>
+            <label>
+                <input type="checkbox" name="secciones[]" value="<?= $s['id'] ?>" <?= $s['habilitada'] ? 'checked' : '' ?>>
+                <?= htmlspecialchars($s['nombre']) ?>
+            </label><br>
+        <?php endforeach; ?>
+            <button name="guardar_secciones">Guardar Cambios</button>
+        </form>
     </div>
 
-    <!-- Sección Gestionar Categorías/Subcategorías -->
+    <!-- ================== CATEGORÍAS ================== -->
     <div id="categorias" style="display:none; margin-top:1rem;">
         <h3>Gestionar Categorías y Subcategorías</h3>
-        <label>Nueva Categoría:</label>
-        <input type="text" placeholder="Ej. Tecnología">
-        <label>Subcategorías:</label>
-        <input type="text" placeholder="Ej. Programación, Redes">
-        <button>Agregar Categoría</button>
-        <h4>Categorías Existentes</h4>
+        <form method="POST">
+            <label>Nueva Categoría:</label>
+            <input type="text" name="categoria" placeholder="Ej. Tecnología">
+            <label>Subcategorías (separa con coma):</label>
+            <input type="text" name="subcategorias" placeholder="Ej. Web, Redes, Soporte">
+            <button name="agregar_categoria">Agregar Categoría</button>
+        </form>
+        <h4>Existentes</h4>
         <ul>
-            <li>Tecnología
-                <ul>
-                    <li>Programación</li>
-                    <li>Redes</li>
-                </ul>
-            </li>
-            <li>Marketing
-                <ul>
-                    <li>Publicidad</li>
-                    <li>Social Media</li>
-                </ul>
-            </li>
+            <?php foreach ($categorias as $c): ?>
+                <li><?= htmlspecialchars($c['nombre']) ?>
+                    <ul>
+                        <?php foreach ($subcategorias as $s): if ($s['categoria_id'] == $c['id']): ?>
+                            <li><?= htmlspecialchars($s['nombre']) ?></li>
+                        <?php endif; endforeach; ?>
+                    </ul>
+                </li>
+            <?php endforeach; ?>
         </ul>
     </div>
 
-    <!-- Sección Gestionar Contenido Estático -->
+    <!-- ================== CONTENIDO ESTÁTICO ================== -->
     <div id="contenido" style="display:none; margin-top:1rem;">
-        <h3>Gestionar Contenido Estático</h3>
-        <label>Título de la Página:</label>
-        <input type="text" placeholder="Ej. Sobre Nosotros">
-        <label>Contenido:</label>
-        <textarea rows="4">Texto existente...</textarea>
-        <button>Guardar Contenido</button>
+        <h3>Contenido Estático</h3>
+        <form method="POST">
+            <label>Título:</label>
+            <input type="text" name="titulo" placeholder="Ej. Sobre Nosotros">
+            <label>Contenido:</label>
+            <textarea name="contenido" rows="4" placeholder="Escribe el texto..."></textarea>
+            <button name="guardar_contenido">Guardar Contenido</button>
+        </form>
     </div>
-
 </main>
-    <?php include 'views/cabeza/footer.php'; ?>
+
+<?php include __DIR__ . '/views/cabeza/footer.php'; ?>
 
 <script>
 function toggleSeccion(id) {
-    const secciones = ['parametros', 'revisarOfertas', 'habilitarSecciones', 'categorias', 'contenido'];
+    const secciones = ['parametros','revisarOfertas','habilitarSecciones','categorias','contenido'];
     secciones.forEach(sec => {
-        document.getElementById(sec).style.display = (sec === id ? 
+        document.getElementById(sec).style.display = (sec === id ?
             (document.getElementById(sec).style.display === 'none' ? 'block' : 'none') 
             : 'none');
     });
 }
-
-function aprobar(button){
-    const row = button.closest('tr');
-    if(row) row.cells[2].innerText = 'Aprobado';
-}
-
-function rechazar(button){
-    const row = button.closest('tr');
-    if(row) row.cells[2].innerText = 'Rechazado';
-}
 </script>
-
 </body>
 </html>
