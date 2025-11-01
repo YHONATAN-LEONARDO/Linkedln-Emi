@@ -29,7 +29,8 @@
       <select id="rol" name="rol" required>
         <option value="">Seleccione un rol</option>
         <option value="postulante">Postulante</option>
-        <option value="empresa">Empresa</option>
+        <option value="empresa">Reclutador</option>
+        <!-- admin mas pero eso no en la base de datos estara el admin por que no seria seguro  que se registren como admin  -->
       </select>
 
       <button type="submit" class="btn-azul">Registrar</button>
