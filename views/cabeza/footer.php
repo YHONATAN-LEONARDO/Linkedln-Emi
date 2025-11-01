@@ -8,6 +8,11 @@
 <footer class="footer">
   <div class="footer-container">
     <!-- Columna izquierda -->
+     <div class="footer-right">
+      <p>
+        A lo largo de su trayectoria, la EMI ha impulsado programas de pregrado, posgrado e investigación científica orientados a responder a los desafíos de la sociedad moderna. Su modelo educativo integra la práctica con la teoría, promoviendo la creación de proyectos tecnológicos, la participación en competencias de innovación y el fortalecimiento de alianzas con instituciones públicas, privadas y organismos internacionales.
+      </p>
+    </div>
     <div class="footer-left">
       <div class="footer-item">
         <ion-icon name="location-outline"></ion-icon>
@@ -26,15 +31,11 @@
     </div>
 
     <!-- Columna derecha -->
-    <div class="footer-right">
-     <p>
-        A lo largo de su trayectoria, la EMI ha impulsado programas de pregrado, posgrado e investigación científica orientados a responder a los desafíos de la sociedad moderna. Su modelo educativo integra la práctica con la teoría, promoviendo la creación de proyectos tecnológicos, la participación en competencias de innovación y el fortalecimiento de alianzas con instituciones públicas, privadas y organismos internacionales.
-    </p>
-    </div>
+    
   </div>
 
   <div class="footer-bottom">
-    <p>© 2025 EcoAbrigo — Todos los derechos reservados.</p>
+    <p>© 2025 Linkln EMI — Todos los derechos reservados.</p>
   </div>
 </footer>
 
