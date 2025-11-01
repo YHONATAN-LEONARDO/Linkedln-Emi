@@ -1,3 +1,11 @@
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'linkdin_emi')
+BEGIN
+    CREATE DATABASE linkdin_emi;
+END
+GO
+
+USE linkdin_emi;
+GO
 CREATE TABLE [roles] (
   [id] int PRIMARY KEY IDENTITY(1, 1),
   [nombre] varchar(50) UNIQUE NOT NULL,
@@ -161,7 +169,8 @@ CREATE TABLE [alertas_seguridad] (
 )
 GO
 
-CREATE UNIQUE INDEX [reacciones_index_0] ON [reacciones] ("publicacion_id", "usuario_id")
+CREATE UNIQUE INDEX [reacciones_index_0] 
+ON [reacciones] (publicacion_id, usuario_id)
 GO
 
 ALTER TABLE [roles_permisos] ADD FOREIGN KEY ([rol_id]) REFERENCES [roles] ([id])
@@ -226,3 +235,123 @@ GO
 
 ALTER TABLE [alertas_seguridad] ADD FOREIGN KEY ([usuario_id]) REFERENCES [usuarios] ([id])
 GO
+---------------------------------------------------------------
+-- DATOS POR DEFECTO (SQL SERVER)
+---------------------------------------------------------------
+
+-- ROLES
+INSERT INTO roles (nombre, descripcion, creado_en) VALUES
+('admin', 'Administrador del sistema', GETDATE()),
+('empresa', 'Publicador de ofertas / reclutador', GETDATE()),
+('postulante', 'Usuario que postula a ofertas', GETDATE());
+
+-- PERMISOS BÁSICOS
+INSERT INTO permisos (codigo, descripcion) VALUES
+('GESTION_USUARIOS', 'Puede administrar usuarios'),
+('PUBLICAR_OFERTA', 'Puede crear y editar ofertas'),
+('POSTULAR', 'Puede postular a una oferta'),
+('GESTION_CONTENIDO', 'Puede editar contenido estático'),
+('VER_SEGURIDAD', 'Puede ver el registro de actividades');
+
+-- Asignar TODOS los permisos al rol admin (id=1)
+INSERT INTO roles_permisos (rol_id, permiso_id)
+SELECT 1, id FROM permisos;
+
+-- USUARIO ADMIN POR DEFECTO
+INSERT INTO usuarios
+(rol_id, nombre, correo, password, educacion, ubicacion, telefono, fecha_nacimiento, estado, creado_en)
+VALUES
+(1, 'Administrador General', 'admin@emi.edu.bo',
+ HASHBYTES('SHA2_256', 'admin123'),
+ N'Escuela Militar de Ingeniería "Mcal. Antonio José de Sucre"',
+ N'La Paz, La Paz, Bolivia',
+ N'+59170000000',
+ '2000-01-01',
+ 'activo',
+ GETDATE());
+
+-- PARÁMETROS DE LA PLATAFORMA
+INSERT INTO parametros_plataforma (nombre, correo_contacto, zona_horaria, creado_por, creado_en)
+VALUES
+(N'LinkedIn EMI', N'contacto@emi.edu.bo', N'GMT-4', 1, GETDATE());
+
+-- SECCIONES HABILITABLES
+INSERT INTO secciones_plataforma (nombre, slug, habilitada, actualizado_por, actualizado_en) VALUES
+(N'Gestión de Usuarios', N'gestion-usuarios', 1, 1, GETDATE()),
+(N'Convocatorias', N'convocatorias', 1, 1, GETDATE()),
+(N'Publicaciones', N'publicaciones', 1, 1, GETDATE()),
+(N'Seguridad', N'seguridad', 1, 1, GETDATE());
+
+-- CONTENIDO ESTÁTICO INICIAL
+INSERT INTO contenidos_estaticos (seccion_id, titulo, contenido, actualizado_por, actualizado_en)
+VALUES
+(3, N'Bienvenido a LinkedIn EMI',
+ N'Plataforma de conexión profesional para estudiantes y egresados de la EMI.',
+ 1, GETDATE());
+
+-- CATEGORÍAS
+INSERT INTO categorias (nombre, descripcion, creada_por, creado_en) VALUES
+(N'Tecnología', N'Empleos del área de informática y sistemas', 1, GETDATE()),
+(N'Administración', N'Cargos administrativos y contables', 1, GETDATE()),
+(N'Ingeniería', N'Convocatorias del área técnica y proyectos', 1, GETDATE());
+
+-- SUBCATEGORÍAS
+INSERT INTO subcategorias (categoria_id, nombre, descripcion, creado_en) VALUES
+(1, N'Desarrollo Web', N'Frontend, Backend y Fullstack', GETDATE()),
+(1, N'Soporte/TI', N'Soporte técnico, redes, help desk', GETDATE()),
+(2, N'Gestión de Proyectos', N'Administración y planificación', GETDATE()),
+(3, N'Electromecánica', N'Mantenimiento y control industrial', GETDATE());
+
+-- OFERTA DE EJEMPLO
+INSERT INTO ofertas
+(usuario_id, categoria_id, subcategoria_id, titulo, descripcion, ubicacion, tipo_jornada, modalidad, documento_adj, estado, publicado_en, actualizado_en)
+VALUES
+(1, 1, 1,
+ N'Asistente Virtual (The Link Housing)',
+ N'Apoyo administrativo remoto. Uso de Google Sheets. Inglés intermedio.',
+ N'Bolivia (remoto)',
+ N'completa',
+ N'remoto',
+ N'CV_Asistente.pdf',
+ N'aprobado',
+ GETDATE(),
+ GETDATE());
+
+-- USUARIO POSTULANTE DEMO
+INSERT INTO usuarios
+(rol_id, nombre, correo, password, estado, creado_en)
+VALUES
+(3, N'Postulante Demo', N'postulante@emi.edu.bo',
+ HASHBYTES('SHA2_256', 'postu123'),
+ 'activo',
+ GETDATE());
+
+-- POSTULACIÓN DE EJEMPLO
+INSERT INTO postulaciones (oferta_id, usuario_id, estado, calificacion, mensaje, creado_en)
+VALUES
+(1, 2, 'en_revision', NULL, N'Me interesa la vacante', GETDATE());
+
+-- PUBLICACIÓN DE EJEMPLO
+INSERT INTO publicaciones (usuario_id, contenido, imagen, creado_en)
+VALUES
+(1, N'¡Bienvenidos a la nueva red profesional de la EMI!', N'public/img/image.png', GETDATE());
+
+-- COMENTARIO DE EJEMPLO
+INSERT INTO comentarios (publicacion_id, usuario_id, comentario, creado_en)
+VALUES
+(1, 1, N'Este es un comentario de prueba.', GETDATE());
+
+-- REACCIÓN DE EJEMPLO
+INSERT INTO reacciones (publicacion_id, usuario_id, tipo, creado_en)
+VALUES
+(1, 1, N'like', GETDATE());
+
+-- ACTIVIDAD / LOG DE EJEMPLO
+INSERT INTO actividades (usuario_id, accion, descripcion, ip, creado_en)
+VALUES
+(1, N'login', N'Inicio de sesión exitoso', N'127.0.0.1', GETDATE());
+
+-- ALERTA DE SEGURIDAD DE EJEMPLO
+INSERT INTO alertas_seguridad (usuario_id, tipo, detalle, atendido, creado_en)
+VALUES
+(1, N'acceso_sospechoso', N'Se detectó un acceso desde IP desconocida', 0, GETDATE());
