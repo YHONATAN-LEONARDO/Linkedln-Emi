@@ -105,6 +105,7 @@ if (!isset($_SESSION['usuario_id'])) {
     <meta name="twitter:image" content="http://13.59.7.49/public/img/main.png">
     <meta name="twitter:site" content="@emi">
     <meta name="twitter:creator" content="@emi">
+    <link rel="icon" type="image/png" sizes="32x32" href="/public/img/main.png">
 
     <!-- ==========================
          Iconos (Ionicons, si usas <ion-icon>)
