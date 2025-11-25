@@ -14,7 +14,15 @@ if (function_exists('verificarSesion')) {
     verificarSesion(); // aquí puedes validar que sea rol empresa/admin si quieres
 }
 
+// ID del usuario logueado
 $usuario_id = $_SESSION['usuario_id'] ?? null;
+
+// Si no hay usuario logueado, opcional: redirigir o cortar
+if ($usuario_id === null) {
+    // puedes cambiar esta parte según tu flujo
+    header('Location: /login.php');
+    exit;
+}
 
 // Rutas para documentos e imágenes (por si las usas en otros procesos)
 $docsPath = __DIR__ . '/../public/docs/';
@@ -29,8 +37,9 @@ if (!is_dir($imgPath)) {
 }
 
 // Obtener convocatorias desde la BD (tabla: ofertas)
+// SOLO las del usuario logueado (o.usuario_id = $usuario_id)
 try {
-    $stmt = $conn->query("
+    $sql = "
         SELECT 
             o.id, 
             o.usuario_id, 
@@ -43,8 +52,12 @@ try {
             u.nombre AS empresa
         FROM ofertas o
         LEFT JOIN usuarios u ON u.id = o.usuario_id
+        WHERE o.usuario_id = :usuario_id
         ORDER BY o.publicado_en DESC
-    ");
+    ";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute(['usuario_id' => $usuario_id]);
     $convocatorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     die("Error al obtener convocatorias: " . $e->getMessage());

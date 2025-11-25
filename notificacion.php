@@ -226,7 +226,7 @@ function tiempoRelativo($fecha)
     }
 
     .subtitle {
-        font-size: 0.95rem;
+        font-size: 1.4rem;
         color: var(--color-text-sec);
         margin-bottom: 1.5rem;
     }
@@ -302,7 +302,7 @@ function tiempoRelativo($fecha)
 
     .solicitud-info {
         flex: 1;
-        font-size: 0.9rem;
+        font-size: 1.3rem;
     }
 
     .solicitud-info strong {
@@ -346,6 +346,7 @@ function tiempoRelativo($fecha)
         align-items: center;
         justify-content: center;
         white-space: nowrap;
+        font-size: 1.4rem;
     }
 
     .btn-aceptar {
@@ -395,6 +396,7 @@ function tiempoRelativo($fecha)
         font-weight: 500;
         border: 1px solid #bbdefb;
         transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+        font-size: 1.3rem;
     }
 
     .btn-accion ion-icon {
@@ -468,7 +470,7 @@ function tiempoRelativo($fecha)
     }
 
     .card-title {
-        font-size: 0.98rem;
+        font-size: 1.2rem;
         font-weight: 600;
         margin: 0;
     }
@@ -520,6 +522,7 @@ function tiempoRelativo($fecha)
         align-items: center;
         justify-content: center;
         transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        font-size: 1.3rem;
     }
 
     .btn-mini:hover {
@@ -616,13 +619,16 @@ function tiempoRelativo($fecha)
             justify-content: center;
         }
     }
+    .notifi{
+        margin-top: 15rem;
+    }
 </style>
 
 <body>
 
     <?php include 'views/cabeza/header.php'; ?>
 
-    <main>
+    <main class="notifi">
         <h1>Notificaciones</h1>
         <p class="subtitle">
             Aquí verás las respuestas de tus postulaciones, solicitudes de conexión y avisos importantes de la plataforma.

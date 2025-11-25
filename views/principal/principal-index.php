@@ -147,8 +147,6 @@ $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
             <p><small>Información esencial de tu cuenta.</small></p>
 
             <ul class="info-extra-lista">
-
-
                 <li>
                     <span class="info-extra-label">Miembro desde:</span>
                     <span class="info-extra-valor">
@@ -162,13 +160,9 @@ $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
                         <?php echo (int)$misPublicaciones; ?>
                     </span>
                 </li>
-
-
             </ul>
 
             <!-- BLOQUE COMPLETO: consejo con estilo y frases que cambian -->
-
-            <!-- HTML -->
             <div class="info-extra-tip" id="infoTip">
                 <span class="info-extra-tip__label">Consejo para tu perfil</span>
                 <p class="info-extra-tip__text" id="infoTipText">
@@ -176,7 +170,7 @@ $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
                 </p>
             </div>
 
-            <!-- CSS -->
+            <!-- CSS del consejo -->
             <style>
                 .info-extra-tip {
                     max-width: 600px;
@@ -211,7 +205,6 @@ $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
                     font-weight: 600;
                 }
 
-                /* Animación suave cuando cambia el texto */
                 .info-extra-tip--fade {
                     animation: fadeTip 0.5s ease-in-out;
                 }
@@ -229,7 +222,7 @@ $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
                 }
             </style>
 
-            <!-- JavaScript -->
+            <!-- JS del consejo -->
             <script>
                 const tips = [
                     "Comparte tus <strong>proyectos y logros</strong> para que tu perfil tenga más visibilidad.",
@@ -247,26 +240,21 @@ $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
                 function changeTip() {
                     tipIndex = (tipIndex + 1) % tips.length;
 
-                    // Reiniciar animación
                     tipBoxEl.classList.remove("info-extra-tip--fade");
-                    void tipBoxEl.offsetWidth; // truco para reiniciar la animación
+                    void tipBoxEl.offsetWidth;
 
                     tipTextEl.innerHTML = tips[tipIndex];
                     tipBoxEl.classList.add("info-extra-tip--fade");
                 }
 
-                // Iniciar cambio de frases cuando la página cargue
                 document.addEventListener("DOMContentLoaded", function() {
-                    // Primer texto desde el array (por si quieres cambiarlo ahí)
                     tipTextEl.innerHTML = tips[0];
                     tipBoxEl.classList.add("info-extra-tip--fade");
-                    // Cambia la frase cada 7 segundos
                     setInterval(changeTip, 7000);
                 });
             </script>
 
         </article>
-
     </section>
 
     <!-- =================================
@@ -369,20 +357,23 @@ $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
                             <?php endif; ?>
                         </div>
 
-                        <!-- Footer de interacciones (solo UI) -->
+                        <!-- Footer de interacciones (UI + contadores aleatorios) -->
                         <div class="card-feed-principal-footer">
                             <div class="card-feed-principal-acciones">
                                 <button type="button" class="card-feed-btn-like">
                                     <ion-icon name="heart-outline" class="card-feed-like-icon"></ion-icon>
                                     <span>Me gusta</span>
+                                    <span class="card-feed-count card-feed-count-like" data-random-like></span>
                                 </button>
                                 <button type="button" class="card-feed-btn-comentar">
                                     <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
                                     <span>Comentar</span>
+                                    <span class="card-feed-count" data-random-comment></span>
                                 </button>
                                 <button type="button" class="card-feed-btn-compartir">
                                     <ion-icon name="share-social-outline"></ion-icon>
                                     <span>Compartir</span>
+                                    <span class="card-feed-count" data-random-share></span>
                                 </button>
                             </div>
                         </div>
@@ -393,6 +384,69 @@ $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
     </section>
 </main>
 
+<!-- CSS SOLO PARA LOS BOTONES (CEL / DESKTOP) -->
+<style>
+    .card-feed-principal-footer {
+        padding-top: .5rem;
+        margin-top: .5rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .card-feed-principal-acciones {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: .25rem;
+    }
+
+    .card-feed-principal-acciones button {
+        flex: 1 1 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+        border: none;
+        background: transparent;
+        padding: .45rem .25rem;
+        border-radius: .5rem;
+        cursor: pointer;
+        font-size: .9rem;
+        color: #4b5563;
+    }
+
+    .card-feed-principal-acciones button:hover {
+        background-color: #f3f4f6;
+    }
+
+    /* Contadores */
+    .card-feed-count {
+        font-size: .8rem;
+        color: #6b7280;
+    }
+
+    .card-feed-count::before {
+        content: "· ";
+    }
+
+    /* Icono de me gusta activo */
+    .card-feed-like-icon.is-liked {
+        color: #ef4444;
+        fill: #ef4444;
+    }
+
+    /* MÓVIL */
+    @media (max-width: 768px) {
+        .card-feed-principal-acciones {
+            gap: .2rem;
+        }
+
+        .card-feed-principal-acciones button {
+            font-size: .8rem;
+            padding: .4rem .2rem;
+        }
+    }
+</style>
+
 <script>
     // Abrir sección de publicar
     const btnPublicar = document.getElementById('btn-abrir-publicar');
@@ -402,10 +456,52 @@ $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
         });
     }
 
-    // Efecto "me gusta" (solo UI)
+    // Valores aleatorios para Me gusta / Comentarios / Compartir
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.card-feed-principal').forEach(card => {
+            const likeSpan = card.querySelector('[data-random-like]');
+            const commentSpan = card.querySelector('[data-random-comment]');
+            const shareSpan = card.querySelector('[data-random-share]');
+
+            if (likeSpan) {
+                const likes = Math.floor(Math.random() * 90) + 10; // 10-99
+                likeSpan.textContent = likes;
+                likeSpan.dataset.value = likes;
+            }
+            if (commentSpan) {
+                const comments = Math.floor(Math.random() * 30); // 0-29
+                commentSpan.textContent = comments;
+                commentSpan.dataset.value = comments;
+            }
+            if (shareSpan) {
+                const shares = Math.floor(Math.random() * 20); // 0-19
+                shareSpan.textContent = shares;
+                shareSpan.dataset.value = shares;
+            }
+        });
+    });
+
+    // Efecto "me gusta" (solo UI) con contador
     document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('card-feed-like-icon')) {
-            e.target.classList.toggle('is-liked');
+        const btnLike = e.target.closest('.card-feed-btn-like');
+        if (!btnLike) return;
+
+        const icon = btnLike.querySelector('.card-feed-like-icon');
+        const countSpan = btnLike.querySelector('.card-feed-count-like');
+
+        if (icon) {
+            icon.classList.toggle('is-liked');
+        }
+
+        if (countSpan) {
+            let current = parseInt(countSpan.dataset.value || countSpan.textContent || '0', 10);
+            if (icon && icon.classList.contains('is-liked')) {
+                current++;
+            } else {
+                current = Math.max(0, current - 1);
+            }
+            countSpan.dataset.value = current;
+            countSpan.textContent = current;
         }
     });
 </script>

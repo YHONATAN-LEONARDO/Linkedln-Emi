@@ -372,11 +372,12 @@ $personas = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </style>
 </head>
 
+
 <body>
 
     <?php include __DIR__ . '/views/cabeza/header.php'; ?>
 
-    <main>
+    <main style="margin-top: 14rem;">
         <h1>Red de contactos</h1>
         <p class="subtitle">
             Conecta con otros estudiantes y egresados de la EMI. Envía solicitudes y construye tu red profesional.

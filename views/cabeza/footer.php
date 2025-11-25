@@ -52,7 +52,7 @@
              COLUMNA 3 — ENLACES
         ======================== -->
     <div class="footer-col footer-links">
-      <h3>Navega</h3>
+      <h3>Navegacion</h3>
 
       <ul>
         <li><a href="/index.php">Inicio</a></li>

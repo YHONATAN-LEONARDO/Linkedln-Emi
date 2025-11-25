@@ -1,3 +1,4 @@
+
 <?php
 // Asumiendo que aquí YA tienes session_start() y $conn disponible
 // (porque tus páginas ya incluyen config/database.php y session.php antes del header)
