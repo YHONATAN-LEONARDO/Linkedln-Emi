@@ -455,7 +455,7 @@ $cvRuta     = !empty($usuario['cv'])   ? $usuario['cv']   : null;
 <body>
     <?php include 'views/cabeza/header.php'; ?>
 
-    <main class="perfil-main">
+    <main class="perfil-main"  >
         <div class="perfil-container">
             <!-- BLOQUE PRINCIPAL DEL PERFIL -->
             <section class="perfil-principal op">

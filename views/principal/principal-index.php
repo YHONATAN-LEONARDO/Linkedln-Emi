@@ -95,6 +95,7 @@ $stmtPublicaciones = $conn->prepare("
     INNER JOIN usuarios u ON p.usuario_id = u.id
     ORDER BY p.creado_en DESC
 ");
+
 $stmtPublicaciones->execute();
 $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -326,9 +327,10 @@ $publicaciones = $stmtPublicaciones->fetchAll(PDO::FETCH_ASSOC);
                         <div>
                             <img src="<?php echo $autorFoto; ?>" alt="Usuario">
                             <div>
-                                <a href="/perfil.php">
+                                <a href="/info.php?id=<?php echo (int)$publicacion['usuario_id']; ?>">
                                     <p><?php echo htmlspecialchars($autorNombre, ENT_QUOTES, 'UTF-8'); ?></p>
                                 </a>
+
 
                                 <?php if ($autorTitulo): ?>
                                     <p><?php echo htmlspecialchars($autorTitulo, ENT_QUOTES, 'UTF-8'); ?></p>
