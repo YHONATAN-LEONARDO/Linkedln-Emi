@@ -53,6 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Limpiar formulario
             $contenido = '';
             $imagen_nombre = null;
+            header('Location: /index.php');
+            exit;
         }
     }
 }
@@ -60,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -67,34 +70,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="/public/css/normalize.css">
     <link rel="stylesheet" href="/public/css/styles.css">
 </head>
+
 <body>
 
-<?php include '../../views/cabeza/header.php'; ?>
+    <?php include '../../views/cabeza/header.php'; ?>
 
-<main class="publicar-u mar">
-    <section class="crear-publicacion">
-        <h1>Crear Nueva Publicación</h1>
+    <main class="publicar-u mar">
+        <section class="crear-publicacion">
+            <h1>Crear Nueva Publicación</h1>
 
-        <?php if($error): ?>
-            <p style="color:red;"><?php echo $error; ?></p>
-        <?php elseif($exito): ?>
-            <p style="color:green;"><?php echo $exito; ?></p>
-        <?php endif; ?>
+            <?php if ($error): ?>
+                <p style="color:red;"><?php echo $error; ?></p>
+            <?php elseif ($exito): ?>
+                <p style="color:green;"><?php echo $exito; ?></p>
+            <?php endif; ?>
 
-        <form action="c-pu.php" method="POST" enctype="multipart/form-data">
-            <label for="contenido">Contenido de la publicación:</label><br>
-            <textarea id="contenido" name="contenido" rows="5" cols="50" placeholder="Escribe aquí tu publicación..."><?php echo htmlspecialchars($contenido ?? ''); ?></textarea><br><br>
-            
-            <label for="imagen">Subir Imagen (opcional):</label><br>
-            <input type="file" id="imagen" name="imagen" accept="image/*"><br><br>
+            <form action="c-pu.php" method="POST" enctype="multipart/form-data">
+                <label for="contenido">Contenido de la publicación:</label><br>
+                <textarea id="contenido" name="contenido" rows="5" cols="50" placeholder="Escribe aquí tu publicación..."><?php echo htmlspecialchars($contenido ?? ''); ?></textarea><br><br>
 
-            <button type="submit">Publicar</button>
-            <a href="/index.php"><button type="button">Cancelar</button></a>
-        </form>
-    </section>
-</main>
+                <label for="imagen">Subir Imagen (opcional):</label><br>
+                <input type="file" id="imagen" name="imagen" accept="image/*"><br><br>
 
-<?php include '../../views/cabeza/footer.php'; ?>
+                <button type="submit">Publicar</button>
+                <a href="/index.php"><button type="button">Cancelar</button></a>
+            </form>
+        </section>
+    </main>
+
+    <?php include '../../views/cabeza/footer.php'; ?>
 
 </body>
+
 </html>

@@ -1,6 +1,22 @@
 <?php
 // convocatoria.php
+
 session_start();
+
+// incluye helpers / DB / session
+require_once __DIR__ . '/config/database.php';    // debe definir $conn (PDO)
+if (file_exists(__DIR__ . '/config/session.php')) {
+    require_once __DIR__ . '/config/session.php';
+}
+
+// helper por si no tienes verificarSesion() en session.php
+if (function_exists('verificarSesion')) {
+    verificarSesion(); // aquí puedes validar que sea rol empresa/admin si quieres
+}
+
+$usuario_id = $_SESSION['usuario_id'] ?? null;
+
+// Rutas para documentos e imágenes (por si las usas en otros procesos)
 $docsPath = __DIR__ . '/../public/docs/';
 $imgPath  = __DIR__ . '/../public/img/';
 
@@ -12,37 +28,23 @@ if (!is_dir($imgPath)) {
     mkdir($imgPath, 0755, true);
 }
 
-// Guardar archivos
-if (isset($_FILES['documento']) && $_FILES['documento']['error'] === UPLOAD_ERR_OK) {
-    $nombreDoc = time() . '_' . basename($_FILES['documento']['name']);
-    move_uploaded_file($_FILES['documento']['tmp_name'], $docsPath . $nombreDoc);
-}
-
-if (isset($_FILES['imagen_empresa']) && $_FILES['imagen_empresa']['error'] === UPLOAD_ERR_OK) {
-    $nombreImg = time() . '_' . basename($_FILES['imagen_empresa']['name']);
-    move_uploaded_file($_FILES['imagen_empresa']['tmp_name'], $imgPath . $nombreImg);
-}
-
-// incluye helpers / DB / session
-require_once __DIR__ . '/config/database.php';    // debe definir $conn (PDO)
-if (file_exists(__DIR__ . '/config/session.php')) {
-    require_once __DIR__ . '/config/session.php';
-}
-// header (vista)
-include __DIR__ . '/views/cabeza/header.php';
-
-// helper por si no tienes verificarSesion() en session.php
-if (function_exists('verificarSesion')) {
-    verificarSesion();
-}
-$usuario_id = $_SESSION['usuario_id'] ?? null;
-
 // Obtener convocatorias desde la BD (tabla: ofertas)
 try {
-    $stmt = $conn->query("SELECT o.id, o.usuario_id, o.titulo, o.descripcion, o.documento_adj, o.estado, o.publicado_en, o.actualizado_en, u.nombre AS empresa
-                          FROM ofertas o
-                          LEFT JOIN usuarios u ON u.id = o.usuario_id
-                          ORDER BY o.publicado_en DESC");
+    $stmt = $conn->query("
+        SELECT 
+            o.id, 
+            o.usuario_id, 
+            o.titulo, 
+            o.descripcion, 
+            o.documento_adj, 
+            o.estado, 
+            o.publicado_en, 
+            o.actualizado_en, 
+            u.nombre AS empresa
+        FROM ofertas o
+        LEFT JOIN usuarios u ON u.id = o.usuario_id
+        ORDER BY o.publicado_en DESC
+    ");
     $convocatorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     die("Error al obtener convocatorias: " . $e->getMessage());
@@ -52,17 +54,30 @@ try {
 function obtenerPostulantes(PDO $conn, $oferta_id)
 {
     try {
-        $s = $conn->prepare("SELECT p.id, p.usuario_id, p.estado, p.calificacion, p.mensaje, u.nombre
-                             FROM postulaciones p
-                             LEFT JOIN usuarios u ON u.id = p.usuario_id
-                             WHERE p.oferta_id = :oferta_id
-                             ORDER BY p.creado_en DESC");
+        $s = $conn->prepare("
+            SELECT 
+                p.id, 
+                p.usuario_id, 
+                p.estado,                  -- en_revision / aceptado / rechazado (reclutador)
+                p.calificacion, 
+                p.mensaje, 
+                p.respuesta_postulante,    -- aceptada / rechazada / NULL
+                p.fecha_respuesta,         -- cuándo respondió el postulante
+                u.nombre
+            FROM postulaciones p
+            LEFT JOIN usuarios u ON u.id = p.usuario_id
+            WHERE p.oferta_id = :oferta_id
+            ORDER BY p.creado_en DESC
+        ");
         $s->execute(['oferta_id' => $oferta_id]);
         return $s->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         return [];
     }
 }
+
+// header (vista) – lo incluimos DESPUÉS de verificar sesión
+include __DIR__ . '/views/cabeza/header.php';
 ?>
 
 <!DOCTYPE html>
@@ -76,6 +91,9 @@ function obtenerPostulantes(PDO $conn, $oferta_id)
     <link rel="stylesheet" href="/public/css/styles.css">
     <style>
         /* estilos básicos (azul-blanco) */
+        main {
+            padding: 17rem 5rem 5rem 4rem;
+        }
 
         .btn {
             background: #007bff;
@@ -168,13 +186,22 @@ function obtenerPostulantes(PDO $conn, $oferta_id)
         <!-- filtros -->
         <div id="filtros" class="card" style="display:none">
             <h3>Filtros (simulados)</h3>
-            <div class="form-row"><label>Nivel</label><select>
+            <div class="form-row">
+                <label>Nivel</label>
+                <select>
                     <option>Todos</option>
                     <option>Licenciatura</option>
                     <option>Maestría</option>
-                </select></div>
-            <div class="form-row"><label>Experiencia mínima (años)</label><input type="number" min="0"></div>
-            <div class="form-row"><label>Habilidades</label><input type="text" placeholder="Ej. Python, Redes"></div>
+                </select>
+            </div>
+            <div class="form-row">
+                <label>Experiencia mínima (años)</label>
+                <input type="number" min="0">
+            </div>
+            <div class="form-row">
+                <label>Habilidades</label>
+                <input type="text" placeholder="Ej. Python, Redes">
+            </div>
             <button class="btn" onclick="alert('Filtros aplicados (simulado)')">Aplicar filtros</button>
         </div>
 
@@ -306,7 +333,9 @@ function obtenerPostulantes(PDO $conn, $oferta_id)
                                 <td class="small"><?= nl2br(htmlspecialchars($c['descripcion'])) ?></td>
                                 <td>
                                     <?php if (!empty($c['documento_adj'])): ?>
-                                        <a href="/public/docs/<?= rawurlencode($c['documento_adj']) ?>" target="_blank"><?= htmlspecialchars($c['documento_adj']) ?></a>
+                                        <a href="/public/docs/<?= rawurlencode($c['documento_adj']) ?>" target="_blank">
+                                            <?= htmlspecialchars($c['documento_adj']) ?>
+                                        </a>
                                     <?php else: ?>
                                         <span class="small">N/A</span>
                                     <?php endif; ?>
@@ -316,8 +345,15 @@ function obtenerPostulantes(PDO $conn, $oferta_id)
                                     <?php if ($postulantes): ?>
                                         <ul class="postulantes-list">
                                             <?php foreach ($postulantes as $p): ?>
-                                                <li><?= htmlspecialchars($p['nombre'] ?? 'Usuario #' . $p['usuario_id']) ?>
-                                                    <span class="small">(estado: <?= htmlspecialchars($p['estado'] ?? 'en_revision') ?>)</span>
+                                                <li>
+                                                    <?= htmlspecialchars($p['nombre'] ?? 'Usuario #' . $p['usuario_id']) ?>
+                                                    <span class="small">
+                                                        (estado: <?= htmlspecialchars($p['estado'] ?? 'en_revision') ?><?php
+                                                                                                                        if (!empty($p['respuesta_postulante'])) {
+                                                                                                                            echo ' / respuesta: ' . htmlspecialchars($p['respuesta_postulante']);
+                                                                                                                        }
+                                                                                                                        ?>)
+                                                    </span>
                                                 </li>
                                             <?php endforeach; ?>
                                         </ul>
@@ -329,10 +365,14 @@ function obtenerPostulantes(PDO $conn, $oferta_id)
                                 <td class="small"><?= htmlspecialchars($c['publicado_en']) ?></td>
                                 <td>
                                     <!-- acciones: editar / cerrar / eliminar / evaluar -->
-                                    <button class="btn" onclick="abrirEditar(<?= $c['id'] ?>, <?= json_encode(addslashes($c['titulo'])) ?>, <?= json_encode(addslashes($c['descripcion'])) ?>)">Editar</button>
+                                    <button class="btn" onclick="abrirEditar(
+                                        <?= $c['id'] ?>,
+                                        <?= json_encode(addslashes($c['titulo'])) ?>,
+                                        <?= json_encode(addslashes($c['descripcion'])) ?>
+                                    )">Editar</button>
 
                                     <?php if ($c['estado'] !== 'cerrada'): ?>
-                                        <form style="display:inline" method="POST" action="/procesos/cerrar_convocatoria.php" onsubmit="return confirm('Cerrar convocatoria?')">
+                                        <form style="display:inline" method="POST" action="/procesos/cerrar_convocatoria.php" onsubmit="return confirm('¿Cerrar convocatoria?')">
                                             <input type="hidden" name="convocatoria_id" value="<?= $c['id'] ?>">
                                             <button class="btn" type="submit">Cerrar</button>
                                         </form>
@@ -340,7 +380,7 @@ function obtenerPostulantes(PDO $conn, $oferta_id)
                                         <span class="small">cerrada</span>
                                     <?php endif; ?>
 
-                                    <form style="display:inline" method="POST" action="/procesos/eliminar_convocatoria.php" onsubmit="return confirm('Eliminar convocatoria? (se borrará permanentemente)')">
+                                    <form style="display:inline" method="POST" action="/procesos/eliminar_convocatoria.php" onsubmit="return confirm('¿Eliminar convocatoria? (se borrará permanentemente)')">
                                         <input type="hidden" name="convocatoria_id" value="<?= $c['id'] ?>">
                                         <button class="btn danger" type="submit">Eliminar</button>
                                     </form>
@@ -356,8 +396,9 @@ function obtenerPostulantes(PDO $conn, $oferta_id)
                                                     <thead>
                                                         <tr>
                                                             <th>Nombre</th>
-                                                            <th>Experiencia</th>
+                                                            <th>Estado actual</th>
                                                             <th>Calificación</th>
+                                                            <th>Nuevo estado</th>
                                                             <th>Acción</th>
                                                         </tr>
                                                     </thead>
@@ -365,15 +406,42 @@ function obtenerPostulantes(PDO $conn, $oferta_id)
                                                         <?php foreach ($postulantes as $p): ?>
                                                             <tr>
                                                                 <td><?= htmlspecialchars($p['nombre'] ?? 'Usuario #' . $p['usuario_id']) ?></td>
-                                                                <td class="small"><?= htmlspecialchars($p['experiencia'] ?? '-') ?></td>
+                                                                <td class="small">
+                                                                    <?= htmlspecialchars($p['estado'] ?? 'en_revision') ?>
+                                                                    <?php if (!empty($p['respuesta_postulante'])): ?>
+                                                                        <br><span class="small">
+                                                                            (respuesta: <?= htmlspecialchars($p['respuesta_postulante']) ?>)
+                                                                        </span>
+                                                                    <?php endif; ?>
+                                                                </td>
                                                                 <td>
                                                                     <select name="calificacion[<?= $p['id'] ?>]">
                                                                         <?php for ($i = 0; $i <= 5; $i++): ?>
-                                                                            <option value="<?= $i ?>" <?= (isset($p['calificacion']) && $p['calificacion'] == $i) ? 'selected' : '' ?>><?= $i ?></option>
+                                                                            <option value="<?= $i ?>"
+                                                                                <?= (isset($p['calificacion']) && $p['calificacion'] == $i) ? 'selected' : '' ?>>
+                                                                                <?= $i ?>
+                                                                            </option>
                                                                         <?php endfor; ?>
                                                                     </select>
                                                                 </td>
-                                                                <td><button class="btn" type="submit" name="guardar_para" value="<?= $p['id'] ?>">Guardar</button></td>
+                                                                <td>
+                                                                    <!-- aquí el reclutador decide -->
+                                                                    <select name="estado[<?= $p['id'] ?>]">
+                                                                        <?php
+                                                                        $estadoActual = $p['estado'] ?? 'en_revision';
+                                                                        $estados = ['en_revision' => 'En revisión', 'aceptado' => 'Aceptado', 'rechazado' => 'Rechazado'];
+                                                                        foreach ($estados as $valor => $texto): ?>
+                                                                            <option value="<?= $valor ?>" <?= ($estadoActual === $valor) ? 'selected' : '' ?>>
+                                                                                <?= $texto ?>
+                                                                            </option>
+                                                                        <?php endforeach; ?>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <button class="btn" type="submit" name="guardar_para" value="<?= $p['id'] ?>">
+                                                                        Guardar
+                                                                    </button>
+                                                                </td>
                                                             </tr>
                                                         <?php endforeach; ?>
                                                     </tbody>
@@ -398,10 +466,22 @@ function obtenerPostulantes(PDO $conn, $oferta_id)
             <h3>Editar Convocatoria</h3>
             <form id="formEditar" method="POST" action="/procesos/editar_convocatoria.php" enctype="multipart/form-data">
                 <input type="hidden" name="convocatoria_id" id="editar_id">
-                <div class="form-row"><label>Título</label><input type="text" name="titulo" id="editar_titulo" required></div>
-                <div class="form-row"><label>Descripción</label><textarea name="descripcion" id="editar_descripcion" rows="4" required></textarea></div>
-                <div class="form-row"><label>Nuevo documento (opcional)</label><input type="file" name="documento"></div>
-                <div><button class="btn" type="submit">Guardar cambios</button> <button type="button" class="btn" onclick="toggle('editarModal')">Cancelar</button></div>
+                <div class="form-row">
+                    <label>Título</label>
+                    <input type="text" name="titulo" id="editar_titulo" required>
+                </div>
+                <div class="form-row">
+                    <label>Descripción</label>
+                    <textarea name="descripcion" id="editar_descripcion" rows="4" required></textarea>
+                </div>
+                <div class="form-row">
+                    <label>Nuevo documento (opcional)</label>
+                    <input type="file" name="documento">
+                </div>
+                <div>
+                    <button class="btn" type="submit">Guardar cambios</button>
+                    <button type="button" class="btn" onclick="toggle('editarModal')">Cancelar</button>
+                </div>
             </form>
         </div>
 
